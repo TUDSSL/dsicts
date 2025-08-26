@@ -130,6 +130,10 @@ _Content developers (in alphabetical order)_:
 * [Liwia Padowska](https://github.com/Liwia-Padowska) :poland: :eu:
 * [Alexandru Postu](https://github.com/apostoo) :romania: :eu:
 
+## Contact 
+
+Have a question for us? Do not hesitate to contact us at our official course e-mail: **CS4800-EWI@tudelft.nl**
+
 ## Frequently Asked Questions
 
 * Question: __Was this course given earlier at TU Delft?__ 
