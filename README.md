@@ -36,10 +36,6 @@ All lectures will be given physically at TU Delft, except for guest lectures whi
   * Lecture 1: __[Introduction]()__ 
   	* [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
-* _05 September 2025 15:45-17:45 (Week 1: Introduction)_
-  * Project meeting 1: __Project presentation and project groups formation__
-    * [TU Delft EEMCS Hall G (36.HB.00.230)](https://esviewer.tudelft.nl/space/181/) lecture room
-
 * _11 September 2025 15:45-17:45 (Week 2: Definitions and Project Start)_
   * Lecture 2: __[Defining Sustainability]()__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
@@ -116,6 +112,10 @@ The final course grade $F$ is calculated as $F=0.6P+0.3E+0.1R$, where $P$ is the
 
 The course is in a continous development, so it will be updated after every iteration. We request all followers of this course to suggest changes and improvemens by submitting issues. We appreciate your ideas and criticism.
 
+There is also a link after every lecture and inside every module of this repository where you can send your feedback.
+
+Thank you!
+
 ## The Course Team
 
 * _Project leader and lecturer_: [Przemysław Pawełczak](https://github.com/przemyslaw-pawelczak) :poland: :eu:
@@ -124,9 +124,9 @@ The course is in a continous development, so it will be updated after every iter
 _Content developers (in alphabetical order)_: 
 
 * [Cristian Cutitei](https://github.com/GrasSoft) :romania: :eu:
-* [Alexandru Despan](https://github.com/Gargant0373) :romania: :eu:
+* [Alex Despan](https://github.com/Gargant0373) :romania: :eu:
 * [Radosław Majer](https://github.com/Rpplctns) :poland: :eu:
-* [Alexandru Nedelcu](https://github.com/anedelcu2002) :romania: :eu:
+* [Alex Nedelcu](https://github.com/anedelcu2002) :romania: :eu:
 * [Liwia Padowska](https://github.com/Liwia-Padowska) :poland: :eu:
 * [Alexandru Postu](https://github.com/apostoo) :romania: :eu:
 
@@ -147,6 +147,11 @@ Have a question for us? Do not hesitate to contact us at our official course e-m
 
 * Question: __Will the video material from the classess be eventually available?__
   * Answer: Yes, we are working on it, but expect the videos be available not earlier than from 2026/2027 academic year.
+
+## Additional Resources
+
+Although this course is the first to shed light on the topic of sustainability in such an all-encompassing manner, it is not the first resource to address the subject. We have surveyed the existing literature and compiled a list for you to explore. It includes previously offered [courses](./External%20Resources/useful_courses.md) and [books](./External%20Resources/books.md). 
+
 
 ## Acknowledgments
 
