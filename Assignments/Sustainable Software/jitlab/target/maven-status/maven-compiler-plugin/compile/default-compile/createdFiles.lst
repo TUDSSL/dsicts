@@ -1,0 +1,9 @@
+com/example/jitlab/api/dto/WorkResponse.class
+com/example/jitlab/JitLabApplication.class
+com/example/jitlab/bench/Bench$Result.class
+com/example/jitlab/bench/BenchFiles$Result.class
+com/example/jitlab/api/dto/WorkRequest.class
+com/example/jitlab/bench/BenchFiles.class
+com/example/jitlab/bench/Bench.class
+com/example/jitlab/api/WorkController.class
+com/example/jitlab/api/dto/FilesRequest.class

@@ -119,11 +119,19 @@ The final course grade $F$ is calculated as $F=0.6P+0.3E+0.1R$, where $P$ is the
 
 * _Written Exam_: In case of grade $E$ for the group project being lower than 5.75 or a student wants to improve the grade $E$, the course will offer a resit opportunity. For the final grade $E$, the highest of the two grades (initilal exam and resit exam) will be taken. Both first and resit exam will have the same format.
 
+### Group project
+
+You will get to apply the knowledge you gain in this course towards designing a sustainable system of your own. To achieve this task you will choose between one of the two projects on offer. 
+
+1. [Designing a sustainable AI system](./Assignments/Sustainable%20AI/) 
+2. [Designing a benchmark to measure sustainability](./Assignments/Sustainable%20Software/)
+
 ### Dates and Deadlines
 
 - _Group Project_: List of available projects will be posted on _September 4, 2025 15:45_. Submission deadline for the group project report is _24 October 2025 15:45_ (i.e. the start of the lecture where selected groups will provide their project group results).
 
 - _Exam and Exam Resit_: Exam is scheduled for _6 November at 13:30_ and will take place in [ME-Hall I (34.D-1-200)](https://esviewer.tudelft.nl/space/13). The resit exam is scheduled for _21 of January at 13:30_ and will take place in [ME-Hall H (34.D-1-100)](https://esviewer.tudelft.nl/space/12).
+
 
 ## This Course is Looking for Your Feedback
 
