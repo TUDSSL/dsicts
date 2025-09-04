@@ -1,10 +1,25 @@
-`# _Designing Sustainable Information and Communication Technologies_ ([CS4800](https://studyguide.tudelft.nl/courses/study-guide/educations/22015))
+# _Designing Sustainable Information and Communication Technologies_ ([CS4800](https://studyguide.tudelft.nl/courses/study-guide/educations/22015))
 
 ## A [TU Delft](https://tudelft.nl/en) MSc course
 
-### Last update: _20 August 2025_
+### Last update: _4 September 2025_
 
 This is the official repository for the TU Delft graduate elective course focused on designing **sustainable** information and communication (ICT) systems. The course is primarily intended for MSc students in [Computer Science]() and [Electrical Engineering]() at TU Delft, but students from other MSc programs with a _suitable background_ (that is, knowledge of one _programming language_, knowledge of _basics of computer networks_ and _computer architecture_) are also welcome to enroll.
+
+## Table of Contents
+
+- [Course-Rationale](#course-rationale)
+- [Learning Objectives](#learning-objectives)
+- [Course Structure, Dates and Delivery Locations](#course-structure-dates-and-delivery-locations)
+- [Methods of Examination and Assessment](#methods-of-examination-and-assessment)
+- [Grade Calculation, Repair Assigmnent and Resits](#grade-calculation-repair-assigmnent-and-resits)
+- [Dates and Deadlines](#dates-and-deadlines)
+- [This Course is Looking for Your Feedback](#this-course-is-looking-for-your-feedback)
+- [The Course Team](#the-course-team)
+- [Contact](#contact)
+- [Frequently Asked Questions](#frequently-asked-questions)
+- [Additional Resources](#additional-resources)
+- [Acknowledgments](#acknowledgments)
 
 ## Course Rationale
 
@@ -33,7 +48,7 @@ At the end of the course, the student is able to:
 All lectures will be given physically at TU Delft, except for guest lectures which will be given online. During this year's course edition there will be no recorded videos of the lectures. The following list provides the structure of the course, mapped to dates, times and location of delivery.
 
 * _04 September 2025 15:45-17:45_ (Week 1: Introduction)
-  * Lecture 1: __[Introduction]()__ 
+  * Lecture 1: __[Introduction](https://github.com/TUDSSL/dsicts/tree/main/Lectures/Lecture%201%20-%20Introduction)__ 
   	* [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _11 September 2025 15:45-17:45 (Week 2: Definitions and Project Start)_
@@ -60,11 +75,11 @@ All lectures will be given physically at TU Delft, except for guest lectures whi
   * No lecture
 
 * _02 October 2025 15:45-17:45 (Week 5: Group Work on the Projects)_
-  * Midterm presentation
+  * __Group Projects Midterm Presentations__
   	* [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _03 October 2025 15:45-17:45 (Week 5: Group Work on the Projects)_
-  * Midterm presentation
+  * __Group Projects Midterm Presentations__ (backup session)
     * [TU Delft EEMCS Hall G (36.HB.00.230)](https://esviewer.tudelft.nl/space/181/) lecture room
 
 * _09 October 2025 15:45-17:45 (Week 6: Sustainable Artificial Intelligence)_
@@ -108,7 +123,7 @@ The final course grade $F$ is calculated as $F=0.6P+0.3E+0.1R$, where $P$ is the
 
 - _Group Project_: List of available projects will be posted on _September 4, 2025 15:45_. Submission deadline for the group project report is _24 October 2025 15:45_ (i.e. the start of the lecture where selected groups will provide their project group results).
 
-- _Exam and Exam Resit_: Exam is scheduled for 6th of November at 13:30 and will take place in [ME-Hall I (34.D-1-200)](https://esviewer.tudelft.nl/space/13). The resit exam is scheduled for 21st of January at 13:30 and will take place in [ME-Hall H (34.D-1-100)](https://esviewer.tudelft.nl/space/12).
+- _Exam and Exam Resit_: Exam is scheduled for _6 November at 13:30_ and will take place in [ME-Hall I (34.D-1-200)](https://esviewer.tudelft.nl/space/13). The resit exam is scheduled for _21 of January at 13:30_ and will take place in [ME-Hall H (34.D-1-100)](https://esviewer.tudelft.nl/space/12).
 
 ## This Course is Looking for Your Feedback
 
