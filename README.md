@@ -1,4 +1,4 @@
-# _Designing Sustainable Information and Communication Technologies_ ([CS4800](https://studyguide.tudelft.nl/courses/study-guide/educations/22015))
+`# _Designing Sustainable Information and Communication Technologies_ ([CS4800](https://studyguide.tudelft.nl/courses/study-guide/educations/22015))
 
 ## A [TU Delft](https://tudelft.nl/en) MSc course
 
@@ -60,10 +60,12 @@ All lectures will be given physically at TU Delft, except for guest lectures whi
   * No lecture
 
 * _02 October 2025 15:45-17:45 (Week 5: Group Work on the Projects)_
-  * No lecture
+  * Midterm presentation
+  	* [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _03 October 2025 15:45-17:45 (Week 5: Group Work on the Projects)_
-  * No lecture
+  * Midterm presentation
+    * [TU Delft EEMCS Hall G (36.HB.00.230)](https://esviewer.tudelft.nl/space/181/) lecture room
 
 * _09 October 2025 15:45-17:45 (Week 6: Sustainable Artificial Intelligence)_
   * Lecture 5: __[Sustainable Artificial Intelligence]()__
@@ -106,7 +108,7 @@ The final course grade $F$ is calculated as $F=0.6P+0.3E+0.1R$, where $P$ is the
 
 - _Group Project_: List of available projects will be posted on _September 4, 2025 15:45_. Submission deadline for the group project report is _24 October 2025 15:45_ (i.e. the start of the lecture where selected groups will provide their project group results).
 
-- _Exam and Exam Resit_: Exam is scheduled for (to be announced) and exam resit is scheduled for (to be announced).
+- _Exam and Exam Resit_: Exam is scheduled for 6th of November at 13:30 and will take place in [ME-Hall I (34.D-1-200)](https://esviewer.tudelft.nl/space/13). The resit exam is scheduled for 21st of January at 13:30 and will take place in [ME-Hall H (34.D-1-100)](https://esviewer.tudelft.nl/space/12).
 
 ## This Course is Looking for Your Feedback
 
