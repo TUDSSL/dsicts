@@ -1,9 +1,0 @@
-https://doi.org/10.1038/s41467-020-17203-7
-
-Direct air carbon capture (DACC) has unrealistic energy and materials requirements even when the most promising technologies are employed. Thus, DACC is unfortunately only an energetically and financially costly distraction in effective mitigation of climate changes at a meaningful scale before we achieve the status of a significant surplus of carbon-neutral/low-carbon energy. 
-
-For a DACC capacity of 30 Gt-CO2/year (smaller than the 2017 level of emissions at 32.6 gigatons/year), the production of solvents for carbon capture would account for about 12-20% of global primary energy supply and more than the global electricity generation capacity. The industrial electrolysis process associated with one pathway of solvent production will result in the production of more than 60 times the global utilization capacity of chlorine gas, posing environmental and health risks. The other pathway requires unimaginable quantities of ammonia and ethylene oxide, which are currently produced based on fossil fuel value chains. Sorbent regeneration also induces a larger energy usage due to the high temperatures required. 
-
-![Pasted image 20250528102956](Figures/Pasted%20image%2020250528102956.png) Energy and materials requirement for material production and sorbent regeneration.
-
-This analysis also excludes the energy and materials requirement for carbon storage and utilization, which imposes further needs for pipelines, prospection equipment, energy for pumps etc. Overall, total global energy supply replacement by low-carbon sources such as nuclear, hydro, wind, and solar can reduce emissions far more effectively. Therefore, it is not logical to allocate low-carbon energy for DACC at present without accelerating the depletion rate of limited fossil fuels. 

@@ -1,6 +1,6 @@
 `Version: 1.0`
 `Contributors: Alex Nedelcu`
-`Publication date: 01.09.2025`
+`Publication date: 04.09.2025`
 
 ## Introduction: the Great Acceleration
 Since the Industrial Revolution in the 1800's, human society has been expanding continuously and exponentially. This is what we call the [Great Acceleration](https://futureearth.org/2015/01/16/the-great-acceleration/), which has resulted in economic growth to the order of trillions, growth in population, transportation and fertilizer use, but also in increasing impacts upon the environment: carbon dioxide and methane emissions, ocean acidification, and deforestation among others.
@@ -14,7 +14,7 @@ The most important and far-reaching impact of humanity on the planet is climate 
 Our world economy currently relies on fossil fuels. When these fuels are combusted, they emit gases such as carbon dioxide into the atmosphere. These gases absorb some of the energy emitted by the planet as infrared radiation. This means that, to maintain the energy balance, the planet gets hotter: the greenhouse effect, hence why these gases are called [greenhouse gases](https://climate.mit.edu/explainers/greenhouse-gases). If the planet is hotter, then the atmosphere is also warmer, and can store more water, making weather patterns more unpredictable and extreme - this is what we commonly call climate change.
 
 
-![Radiative forcing infographic](Documentation/How%20climate%20change%20works/Figures/Radiative%20forcing%20infographic.png)[The energy balance within Earth's atmosphere.](https://climate.mit.edu/explainers/radiative-forcing)
+![radiative_forcing](Figures/radiative_forcing.png)[The energy balance within Earth's atmosphere.](https://climate.mit.edu/explainers/radiative-forcing)
 
 ## ICT's impacts
 Now, you may think that this has nothing to do with us as software engineers. Software does not exist in the real world; it is ones and zeroes. But every line of code needs a physical processor to run it. That processor needs power electronics and cooling. And you, as a programmer, need a screen, a mouse, a keyboard, and probably a connection to the internet to run the latest version of Copilot. These are all physical objects in the real world, which have an impact on the real world.
@@ -56,7 +56,7 @@ Secondly, you may have heard claims from companies pushing technologies such as 
 
 The problems with such thinking are manifold. The technology for carbon capture is as of yet unproven, and [does not work as well as we are told in real world use-cases](https://ieefa.org/ccs). It also consumes energy and costs money, which [could be put to better use](https://sci-hub.st/https://doi.org/10.1039/C9EE02709B) either reducing energy consumption or replacing polluting generation like coal or gas with renewables. Then, if we were to use carbon capture to take in all the emissions from our modern economy - only capture, not all the transport or storage we would also need to do - we would need to expend [an unbelievable amount of energy and materials](https://doi.org/10.1038/s41467-020-17203-7) for the carbon capture machines. Not to mention that, historically, oil companies have been using carbon capture to pump carbon dioxide into expended oil wells and extract more oil, something called [enhanced oil recovery](https://drilled.media/news/ccs). Is this really the future of sustainability?
 
-![2023-12-05 IEEFA Real world carbon capture rates](Documentation/Why%20carbon%20capture%20and%20storage%20is%20not%20the%20solution/Figures/2023-12-05%20IEEFA%20Real%20world%20carbon%20capture%20rates.jpg)
+![carbon_capture_iee](Figures/carbon_capture_iee.jpg)
 [Carbon capture doesn't work.](https://ieefa.org/ccs)
 
 There are other solutions being proposed, such as biochar carbon removal, bioenergy with carbon capture and storage, direct air capture, and enhanced rock weathering. But these [all face the same problems as carbon capture](https://www.nature.com/articles/d41586-023-00953-x): insufficient technology readiness level and cost and material requirements that are utterly prohibitive. These are not real, solid solutions for decarbonization. 
@@ -92,7 +92,7 @@ Want to know more about the topics in this lecture? Here are some sources that d
 - [Integrative Design for Radical Energy Efficiency](https://integrative-design-for-radical-energy-efficiency.stanford.edu/): a design paradigm that aims to reduce the general impact of systems rather than individual components through energy efficiency.
 
 ## Carbon capture
-- [Extra - Carbon Capture and Storage](Extra/Extra%20-%20Carbon%20Capture%20and%20Storage.md): a short, optional reading from your dependable course TA's, synthesizing how carbon capture works, the difference between industrial carbon capture and direct air capture, and various criticisms of the technology.
+- [Extra - Carbon Capture and Storage](Extra%20-%20Carbon%20Capture%20and%20Storage): a short, optional reading from your dependable course TA's, synthesizing how carbon capture works, the difference between industrial carbon capture and direct air capture, and various criticisms of the technology.
 - [Carbon Dioxide Capture Handbook](https://www.netl.doe.gov/sites/default/files/netl-file/Carbon-Dioxide-Capture-Handbook-2015.pdf ): an in-depth review of the technologies being applied in carbon capture systems from the US National Energy Technology Laboratory. Could be quite dated as it is from 2015.
 - [The Role of CO2 Storage](https://www.iea.org/reports/the-role-of-co2-storage): a report from the International Energy Agency that discusses scenarios for CCS implementation, as well as its limitations.
 - [Confronting the Myth of Carbon-free Fossil Fuels](https://ciel.org/wp-content/uploads/2021/07/Confronting-the-Myth-of-Carbon-Free-Fossil-Fuels.pdf): a brief from the Center for International Environmental Law that lays out the case against carbon capture for climate change mitigation in great detail.
