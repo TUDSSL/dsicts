@@ -128,7 +128,7 @@ You will get to apply the knowledge you gain in this course towards designing a 
 
 ### Grading Scheme
 
-To better understand what we want from your report, we have decided to share the grading scheme we will be using to grade the reports. You can find the Excel Sheet [here]().
+To better understand what we want from your report, we have decided to share the grading scheme we will be using to grade the reports. You can find the Excel Sheet [here](https://github.com/TUDSSL/dsicts/tree/main/Grading%20Scheme).
 
 ### Dates and Deadlines
 
