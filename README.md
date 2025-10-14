@@ -2,7 +2,7 @@
 
 ## A [TU Delft](https://tudelft.nl/en) MSc course
 
-### Last update: _4 September 2025_
+### Last update: _14 October 2025_
 
 This is the official repository for the TU Delft graduate elective course focused on designing **sustainable** information and communication (ICT) systems. The course is primarily intended for MSc students in [Computer Science]() and [Electrical Engineering]() at TU Delft, but students from other MSc programs with a _suitable background_ (that is, knowledge of one _programming language_, knowledge of _basics of computer networks_ and _computer architecture_) are also welcome to enroll.
 
@@ -125,6 +125,10 @@ You will get to apply the knowledge you gain in this course towards designing a 
 
 1. [Designing a sustainable AI system](./Assignments/Sustainable%20AI/) 
 2. [Designing a benchmark to measure sustainability](./Assignments/Sustainable%20Software/)
+
+### Grading Scheme
+
+To better understand what we want from your report, we have decided to share the grading scheme we will be using to grade the reports. You can find the Excel Sheet [here]().
 
 ### Dates and Deadlines
 
