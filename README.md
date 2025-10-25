@@ -52,7 +52,7 @@ All lectures will be given physically at TU Delft, except for guest lectures whi
   	* [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _11 September 2025 15:45-17:45 (Week 2: Definitions and Project Start)_
-  * Lecture 2: __[Defining Sustainability]()__
+  * Lecture 2: __[Defining Sustainability](https://github.com/TUDSSL/dsicts/tree/main/Lectures/Lecture%202%20-%20Defining%20Sustainability)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _12 September 2025 15:45-17:45 (Week 2: Definitions and Project Start)_
@@ -60,18 +60,18 @@ All lectures will be given physically at TU Delft, except for guest lectures whi
     * [TU Delft EEMCS Hall G (36.HB.00.230)](https://esviewer.tudelft.nl/space/181/) lecture room
 
 * _18 September 2025 15:45-17:45 (Week 3: Software)_
-  * Lecture 3: __[Sustainable Software]()__
+  * Lecture 3: __[Sustainable Software](https://github.com/TUDSSL/dsicts/tree/main/Lectures/Lecture%203%20-%20Sustainable%20Software)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _19 September 2025 15:45-17:45 (Week 3: Software)_
   * Guest lecture 1: __[To Be Announced]__ (to be confirmed)
     * [online]
 
-* _25 September 2025 15:45-17:45 (Week 4: Cloud Computing)_
-  * Lecture 4: __[Sustainable Cloud Computing]()__
+* _25 September 2025 15:45-17:45 (Week 4: Sustainable Artificial Intelligence)_
+  * Lecture 4: __[Sustainable Artificial Intelligence](https://github.com/TUDSSL/dsicts/tree/main/Lectures/Lecture%204%20-%20Sustainable%20AI)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
-* _26 September 2025 15:45-17:45 (Week 4: Cloud Computing)_
+* _26 September 2025 15:45-17:45 (Week 4: Sustainable Artificial Intelligence)_
   * No lecture
 
 * _02 October 2025 15:45-17:45 (Week 5: Group Work on the Projects)_
@@ -82,15 +82,15 @@ All lectures will be given physically at TU Delft, except for guest lectures whi
   * __Group Projects Midterm Presentations__ (backup session)
     * [TU Delft EEMCS Hall G (36.HB.00.230)](https://esviewer.tudelft.nl/space/181/) lecture room
 
-* _09 October 2025 15:45-17:45 (Week 6: Sustainable Artificial Intelligence)_
-  * Lecture 5: __[Sustainable Artificial Intelligence]()__
+* _09 October 2025 15:45-17:45 (Week 6: Sustainable Cloud Computing)_
+  * Lecture 5: __[Sustainable Cloud Computing](https://github.com/TUDSSL/dsicts/tree/main/Lectures/Lecture%205%20-%20Sustainable%20Cloud%20Computing)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
-* _10 October 2025 15:45-17:45 (Week 6: Sustainable Artificial Intelligence)_
+* _10 October 2025 15:45-17:45 (Week 6: Sustainable Cloud Computing)_
   * No lecture
 
 * _16 October 2025 15:45-17:45 (Week 7: Sustainable Electronics Design)_
-  * Lecture 6: Lecture __[Sustainable Electronics Design]()__
+  * Lecture 6: Lecture __[Sustainable Electronics Design](https://github.com/TUDSSL/dsicts/tree/main/Lectures/Lecture%206%20-%20Sustainable%20Electronics)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _17 October 2025 15:45-17:45 (Week 7: Sustainable Electronics Design)_
