@@ -155,7 +155,7 @@ But to make a hard drive disk we don't only need the materials inside, we also n
 
 There [are several ways to measure this energy](https://ourworldindata.org/energy-definitions). First, we can take a look at the primary energy: the energy found in nature, inside inputs that have not been processed by humans, with examples being the chemical energy inside wood, coal, or oil. But we can also look at the useful energy, which is put to the desired output of the application, such as the electricity that powers a lightbulb or the heat from wood burnt in a fireplace. Both of these can be used to calculate the (primary) energy intensity of a product of service: how many units of energy are required to power it per unit of output? 
 
-[w=1350 4](Figures/w%3D1350%204.avif)
+![w=1350 4](Figures/w%3D1350%204.avif)
 [Primary, secondary, final, and useful energy.](https://ourworldindata.org/energy-definitions)
 
 ### 4. Water intensity
