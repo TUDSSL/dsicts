@@ -183,7 +183,7 @@ A simple technique that uses fidelity training is **Successive halving**:
 3. Continue configs with budget B.
 4. Repeat until you are left with one.
 
-![Successive Halving](Successive%20Halving.png)
+![Successive Halving](Figures/successive_halving.png)
 [Some configs may behave worse at the beginning, but better at the end of training.](https://www.studyguide.tudelft.nl/courses/study-guide/educations/14789)
 
 ## Transfer learning
