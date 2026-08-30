@@ -1,14 +1,14 @@
-# _Designing Sustainable Information and Communication Technologies_ ([CS4800](https://studyguide.tudelft.nl/courses/study-guide/educations/22015))
+# _Designing Sustainable ICT Systems_ ([CS4800](https://studyguide.tudelft.nl/courses/study-guide/educations/22015))
 
 ## A [TU Delft](https://tudelft.nl/en) MSc course
 
 ### Last update: _31 August 2026_
 
-This is the official repository for the TU Delft graduate elective course focused on designing **sustainable** information and communication (ICT) systems. The course is primarily intended for MSc students in [Computer Science]() and [Electrical Engineering]() at TU Delft, but students from other MSc programs with a _suitable background_ (that is, knowledge of one _programming language_, knowledge of _basics of computer networks_ and _computer architecture_) are also welcome to enroll.
+This is the official repository for the TU Delft graduate elective course focused on designing **sustainable** information and communication (ICT) systems. The course is primarily intended for MSc students in [Computer Science](https://www.tudelft.nl/en/education/programmes/masters/cs/msc-computer-science) and [Electrical Engineering](https://www.tudelft.nl/en/education/programmes/masters/ee/msc-electrical-engineering) at TU Delft, but students from other MSc programs with a _suitable background_ (that is, knowledge of one _programming language_, knowledge of _basics of computer networks_ and _computer architecture_) are also welcome to enroll.
 
 ## Table of Contents
 
-- [Course-Rationale](#course-rationale)
+- [Course Rationale](#course-rationale)
 - [Learning Objectives](#learning-objectives)
 - [Course Structure, Dates and Delivery Locations](#course-structure-dates-and-delivery-locations)
 - [Assessment](#assessment)
