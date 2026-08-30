@@ -1,4 +1,4 @@
-`Version: 1.0`
+`Version: 1.1`
 `Contributors: Alex Nedelcu, Cristian Cutitei`
 `Publication date: 25.09.2025`
 
@@ -8,10 +8,20 @@ Up until now, we've studied the sustainability of software we work with, and soo
 ## Definitions
 Let's start by making sure that we are all on the same page. A data center is a space that contains ICT equipment such as computers, ranging from a server the size of a closet to tens of thousands of square meters. Historically, [most data centers](https://ifp.org/how-to-build-an-ai-data-center/) have been rooms or floors in multi-use buildings (colocation). In contrast, modern data centers involve tens of thousands of computers and their supporting infrastructure in a specially-designed building. This is what we call cloud computing: warehouses with a lot of servers stacked in boxes and all the cooling and power equipment required to keep them running. 
 
-![Skybox_Chicago_I.original](Figures/Skybox_Chicago_I.original.jpg) 
+![Skybox_Chicago_I.original.jpg](Figures/Skybox_Chicago_I.original.jpg)
 [A data center is basically a big warehouse with computers inside.](https://baxtel.com/news/skybox-datacenters-finishes-construction-on-illinois-data-center)
 
-We usually [classify](https://ifp.org/how-to-build-an-ai-data-center/) data centers according to the continuous power load they draw from the electricity grid to function at full capacity. This is their capacity in megawatts (MW), and includes more than just computing activities! As we will see later on, some are already being planned at GW level.
+We usually [classify](https://ifp.org/how-to-build-an-ai-data-center/) data centers according to the continuous power load they draw from the electricity grid to function at full capacity. This is their capacity in megawatts (MW), and includes more than just computing activities. We can expect [three rough categories](https://escholarship.org/uc/item/32d6m0d1). On the smaller side are internal/on-premises/enterprise data centers used by a single company, with capacities typically [below](https://www.datamation.com/data-center/what-is-data-center/) 1 MW. Then, there are the wholesale/colocated data centers that rent out parts of their capacity to customers, going [up to](https://vantage-dc.com/data-center-locations/emea/cardiff-united-kingdom/) 100 MW. Finally, hyperscale data centers are built by large corporations for their own operations, and go beyond 100 MW, with some already being [planned](https://www.cnbc.com/2025/10/29/amazon-opens-11-billion-ai-data-center-project-rainier-in-indiana.html) at a GW level.
+
+But [where are these data centers found](https://www.iea.org/reports/energy-and-ai/)? We know that they are definitely spatially concentrated. The US state of Virginia features a 'Data Center Alley', and 25% of its electricity supply is consumed by data centers. Similarly, Ireland has 20% of its electricity supply going to data centers. Large clusters were also traditionally found around northwestern Europe, in Frankfurt, London, and Amsterdam; new developments can be seen around Singapore, Beijing, Shanghai, and Guangzhou. Finally, many developers are moving towards Saudi Arabia and the Gulf states due to their low electricity and construction costs.
+
+![data_center_map.png](Figures/data_center_map.png)
+[There are several dozen gigawatts of data center capacity online as we speak.](https://www.iea.org/reports/energy-and-ai/)
+
+We can also classify data centers according to how they are used. At a high level, IBM distinguishes [a few use-cases](https://www.ibm.com/think/topics/cloud-computing-use-cases). Firstly, data center operators can offer infrastructure- or platform-as-a-service (IaaS/PaaS) solutions, which provide compute (and, in the case of the latter, plug-and-play functionality) to customers. Alternatively, they can offer software-as-a-service (SaaS) solutions and manage everything in-house, letting customers simply access their software online or through an API. Finally, there are quite a few use-cases related to cloud storage, as well as allowing users to back up copies of their data in the cloud. But in a day-to-day sense, practically anyone who wants to gain access to the internet has to go through a data center. This means social media, video streaming, hosting webservers (you've probably played video games on EU-West servers in Amsterdam!), AI training workloads, simulations, and software development and testing.
+
+![as_a_service.png](Figures/as_a_service.png)
+[Various use-cases involve different parts of the work being done by the customer.](https://www.geeksforgeeks.org/software-engineering/difference-between-iaas-paas-and-saas/)
 
 Importantly, if we want to compare the efficiency of one data center to that of another, we can't just use the capacity (even though larger, dedicated data centers tend to be more energy efficient than colocated ones). We are also interested in the [utilization rate](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) of the data center, or the percentage of time that the computing equipment is in operation. Some enterprise workloads have less than 50% utilization, while cloud computing is between 50-60% and AI training is above 80%. Low utilization means that servers are laying idle most of the time.
 
@@ -23,25 +33,28 @@ $$\mathrm{WUE}=\frac{\mathrm{Annual \; water \; usage}}{\mathrm{IT \; equipment 
 
 These metrics are [not perfect](https://datacentremagazine.com/articles/power-usage-effectiveness-not-the-whole-story), and do not take into account many sustainability-related aspects, but they pretty clearly address what we are interested in. Even though TGG has also defined [other, more complex metrics](https://lists.itic.org/news-events/news-releases/amid-growing-energy-demand-the-green-grid-launches-new-data-center-effectiveness-tool), we'll focus on these two for now to keep it simple.
 
-![tgg_metric_calculation](Figures/tgg_metric_calculation.png) [Calculation method for TGG's data center resource effectiveness metric.](https://www.thegreengrid.org/resources/library-and-tools/wp93-data-center-resource-effectiveness-dcre-metric)
+![tgg_metric_calculation.png](Figures/tgg_metric_calculation.png)
+[Calculation method for TGG's data center resource effectiveness metric.](https://www.thegreengrid.org/resources/library-and-tools/wp93-data-center-resource-effectiveness-dcre-metric)
 
 The final metric we should be aware of is related to data center reliability. Because we want cloud computing to operate without interruptions, data centers are designed to minimize the risk of downtime. The Uptime Institute, another trade organization, [classifies](https://uptimeinstitute.com/tiers) data centers according to four tiers, with Tier I being the least reliable and Tier IV being the most reliable (with a theoretical uptime of 99.995%). They achieve this by avoiding single points of failure, with backup diesel generators and redundant cooling and power systems. 
 
 ## Data center architecture: computing
 In a data center, computers are stacked vertically in large racks, each holding several dozen computers, together with network switches, power electronics, and sometimes backup batteries. The racks are organized in lines and form corridors inside the data halls. 
 
-![data_center_racks](Figures/data_center_racks.jpg) 
+![data_center_racks.jpg](Figures/data_center_racks.jpg) 
 [Server racks.](https://ifp.org/how-to-build-an-ai-data-center/)
 
 Each server contains a variety of ICT electronics: CPUs, GPUs and more. Some, such as specialized [AI Neoclouds](https://semianalysis.com/2024/10/03/ai-neocloud-playbook-and-anatomy/ ), focus on GPU compute rental, and therefore downgrade their CPUs and beef up their internal data transfer networks to optimize for LLM training. In Lecture 6, you will see that a single processor requires dozens of elements. Multiply that by 2048 (for a Neocloud) or by several tens of thousands (for a hyperscale data center) - what kind of material footprint are we looking at?
 
-There's also all the data storage and [data transfer networks](https://semianalysis.com/2024/10/03/ai-neocloud-playbook-and-anatomy/ ) that need to be set up between servers: frontend (Ethernet), backend (InfiniBand), and the status data for the servers themselves. In designing data center architectures, there are always trade-offs: for example, [increasing server density](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/ ) by bringing everything closer together will allow you to use copper instead of fiber optics for data transmission, but will increase your need for cooling. Sustainability is not often taken into account in these trade-offs.
+Let's start with an individual processor, which uses electrical power to perform computations. This electrical power is downgraded to heat: one kW of electricity results in approximately one kW of heat. Chipmakers design chips for a [thermal design power](https://en.wikipedia.org/wiki/Thermal_design_power) (TDP): the maximum heat it can handle. This value has been continuously increasing over the past 10 years, and continues to accelerate with AI-specific equipment reaching [1500W](https://www.tomshardware.com/pc-components/cooling/future-ai-processors-said-to-consume-up-to-15-360w-massive-power-draw-will-demand-exotic-immersion-and-embedded-cooling-tech). Of course, the actual computing activities and the resulting power consumption depend strongly on what kind of workload you're running on the chip.
 
-Let's start with an individual processor, which uses electrical power to perform computations. This electrical power is downgraded to heat: one kW of electricity results in approximately one kW of heat. Chipmakers design chips for a [thermal design power](https://en.wikipedia.org/wiki/Thermal_design_power) (TDP): the maximum heat it can handle. This value has been continuously increasing over the past 10 years, and continues to accelerate with AI-specific equipment reaching [1500W](https://www.tomshardware.com/pc-components/cooling/future-ai-processors-said-to-consume-up-to-15-360w-massive-power-draw-will-demand-exotic-immersion-and-embedded-cooling-tech).
+![tdp.png](Figures/tdp.png) 
+[TDP ratings have been increasing for the past ten years. Note the 2023 cutoff!](https://passive-components.eu/phil-lessner-yageo-cto-on-artificial-intelligence-why-now/)
 
 In a typical air-cooled server, the chip is [connected](https://semianalysis.com/2025/02/13/datacenter-anatomy-part-2-cooling-systems/) to a thermal interface material (TIM), which conducts heat from the chip package to a heat sink. The heat sink increases the surface area of heat flux, improving cooling performance. The higher TDP of the chip, the bigger the heat sink needs to be, so fewer modern chips (such as the NVIDIA H100) can fit in the same rack. The heat from the heat sink is then evacuated by server fans into the data halls.
 
-![Properties-of-thermal-interface-material](Figures/Properties-of-thermal-interface-material.jpg) [Thermal interface material and heat sink.](https://mgchemicals.com/knowledgebase/white-papers/properties-of-thermal-interface-material/)
+![Properties-of-thermal-interface-material.jpg](Figures/Properties-of-thermal-interface-material.jpg) 
+[Thermal interface material and heat sink.](https://mgchemicals.com/knowledgebase/white-papers/properties-of-thermal-interface-material/)
 
 Once the hot air is in the data hall, outside the server rack, it's the job of the cooling system to get rid of it.
 
@@ -52,52 +65,79 @@ Where we left off, the server exhausted heat from the chip into the corridor of 
 
 Traditional data centers used to feature a lot of mixing between the intake cool air and the exhaust hot air, which meant that the air conditioners needed to work even harder to maintain a low temperature. It's as if you wanted to cool down a room in summer while leaving the window open! Nowadays, airflow within the data center is [managed](https://semianalysis.com/2025/02/13/datacenter-anatomy-part-2-cooling-systems) very carefully, and corridors are contained either through hot aisle containment or cold aisle containment. This means that the cool air flows are kept separate from the hot air flows, which makes everything more efficient. Companies also perform computational fluid dynamics studies of the airflow to optimize it as much as possible.
 
-![hot_aisle_containment](Figures/hot_aisle_containment.jpg)
- [Hot aisle containment.](https://ifp.org/how-to-build-an-ai-data-center/)
+![hot_aisle_containment.jpg](Figures/hot_aisle_containment.jpg) 
+[Hot aisle containment.](https://ifp.org/how-to-build-an-ai-data-center/)
 
 The warm water from the CRAC/CRAH is then [taken](https://semianalysis.com/2025/02/13/datacenter-anatomy-part-2-cooling-systems) to a central chiller to be cooled down. The chiller is a large-scale, energy-intensive component (in fact, one of the most expensive in the data center) that performs a full refrigeration cycle. Like a fridge, it takes in the warm water and cools it. 
 
 The [refrigeration cycle](https://en.wikipedia.org/wiki/Heat_pump_and_refrigeration_cycle) has four steps. First, a refrigerant liquid absorbs heat from the water and evaporates. The refrigerant in vapor form goes through a compressor, increasing its pressure and temperature and therefore increasing its capacity to transfer heat. Then, it enters a condenser, where it transfers heat to a separate medium that goes into the outdoor cooling loop. Finally, an expansion valve reduces pressure and thereby temperature, returning the refrigerant to a liquid state at very low temperature.
 
-![Refrigeration-Cycle_02-1024x576](Figures/Refrigeration-Cycle_02-1024x576.png)
- [Refrigeration cycle.](https://www.inflowinventory.com/blog/refrigeration-cycle-diagram/)
+![Refrigeration-Cycle_02-1024x576.png](Figures/Refrigeration-Cycle_02-1024x576.png) 
+[Refrigeration cycle.](https://www.inflowinventory.com/blog/refrigeration-cycle-diagram/)
 
 The end result is that heat is moved to the external cooling towers, which can either be dry or wet. A dry cooling tower has a closed-loop system, in which water flows through a coil and is cooled by a fan. In contrast, wet coolers spray water from the condenser loop, increasing cooling capacity through evaporation (just like sweat) while also increasing water consumption. Wet coolers [perform](https://semianalysis.com/2025/02/13/datacenter-anatomy-part-2-cooling-systems) best in dry locations with low background humidity, while dry coolers perform best in wet locations, and require more electricity because of their lower cooling capacity. Some data centers also use more complex adiabatic coolers or reuse their waste heat, though we'll discuss that later. 
 
-![dry cooling tower](Figures/dry%20cooling%20tower.png) [Dry cooling tower.](https://youtu.be/vZkA0z9JRgw)
+![dry cooling tower.png](Figures/dry_cooling_tower.png) 
+[Dry cooling tower.](https://youtu.be/vZkA0z9JRgw)
 
-![wet cooling tower](Figures/wet%20cooling%20tower.png) [Wet cooling tower.](https://youtu.be/vZkA0z9JRgw)
+![wet cooling tower.png](Figures/wet_cooling_tower.png)
+[Wet cooling tower.](https://youtu.be/vZkA0z9JRgw)
 
 Nowadays, a lot of the energy efficiency low hanging fruit [have been picked](https://semianalysis.com/2025/02/13/datacenter-anatomy-part-2-cooling-systems). Servers have been specifically designed to run at the highest temperature possible (up to 45 degrees Celsius!), and their fans have increased in size, because larger fans can produce the same airflow for less power. Airflow is optimized and contained, and new designs rely much more on free cooling. In free cooling systems, the outside environment is used to cool the data center; for example, exterior air is used in colder climates, eliminating the need for a chiller. Other data centers use multiple cooling loops, and might even have large water storage systems that can hold a lot of heat.
 
-![data_center_airflow](Figures/data_center_airflow.png)
- [Computational fluid dynamics modeling of data center airflows.](https://mediafieldsjournal.org/air-conditioning-the-internet/)
+![data_center_airflow.png](Figures/data_center_airflow.png)
+[Computational fluid dynamics modeling of data center airflows.](https://mediafieldsjournal.org/air-conditioning-the-internet/)
 
 All these cooling systems are ultimately critical to the functioning of the data center. Even though operators power the cooling system through highly redundant architectures, as we'll see below, if catastrophe did strike and the air conditioning system were shut off, it would take [twenty minutes](https://mediafieldsjournal.org/air-conditioning-the-internet/) before the temperature in the data hall rose to what we can call total heat death. Air conditioning keeps the internet alive.
+
 ## Data center architecture: power
 The computers and cooling equipment that we discussed above also need power. Data centers have sophisticated, redundant architectures for delivering constant stable electricity to each individual server. As a matter of principle, voltage is [kept](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) as high as possible until close to the servers, because power losses scale with the square of current and higher voltage means lower current. High voltage is quite dangerous, however, so this voltage is stepped down in the data hall.
 $$\mathrm{P}=\mathrm{I} \;[A]  \cdot \mathrm{U}\; [V] = \mathrm{I^2} \; [A^2] \cdot \mathrm{R} \; [\Omega] \; \; \; \; [W] $$
 
-The utility delivers high voltage (HV) electricity to the data center, and power transformers convert it to medium voltage (MV). These transformers [are set up](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) in a redundant N+1 configuration: for example, three transformers share the load at two thirds of their rated capacity, so that, if one fails upon initial activation, two can maintain full operation. They are also kept in partial operation because completely unused transformers can deteriorate. These transformers need copper for their coils and steel for the transformer core. The steel is of a very specific type: rare and costly grain oriented electrical steel.
+The utility delivers high voltage (HV) electricity at about 100kV to the data center, and power transformers convert it to medium voltage (MV) at about 11kV. These transformers [are set up](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) in a redundant N+1 configuration: for example, three transformers share the load at two thirds of their rated capacity, so that, if one fails upon initial activation, two can maintain full operation. They are also kept in partial operation because completely unused transformers can deteriorate. These transformers need copper for their coils and steel for the transformer core. The steel is of a very specific type: rare and costly grain oriented electrical steel.
 
-![redundant_transformers](Figures/redundant_transformers.png) [Redundant N+1 power supply.](https://www.slideshare.net/JohannHendry/thefutureofdatacentresprofianbitterlinemerson)
+![redundant_transformers.png](Figures/redundant_transformers.png) 
+[Redundant N+1 power supply.](https://www.slideshare.net/JohannHendry/thefutureofdatacentresprofianbitterlinemerson)
 
-From the transformers, there are [two](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) transmission paths: one is an uninterruptible power supply (UPS) to the servers, and the other is the path to the cooling equipment. We will focus on the former in what follows.
+From the transformers, there are [two](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) transmission paths that go through a medium-voltage switchgear: one is an uninterruptible power supply (UPS) to the servers, and the other is the path to the cooling equipment. Of course, to be actually usable in server equipment, the power needs to be stepped down further to low voltage (LV) or about 415V. The overall architecture of the power system is shown in the figure below.
 
-The data center building has multiple data halls, and each data hall [has](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) multiple pods, each with its own dedicated switchgear and generator. The switchgear distributes, protects, and meters power; it contains circuit breakers, metering components, relays, current and voltage transformers, a switch, and cabling. All these components aren't all that important to us - what matters is the scale and materiality of the processes we are working with. Alongside this switchgear is a diesel generator which can take over in the case of an outage. Data centers store 24 to 48 hours of fuel at full load - at every outage, we are burning diesel!
+![data_center_power_diagram.png](Figures/data_center_power_diagram.png) 
+[A lot of complex electrical engineering is required to bring a data center to life.](https://www.lorisweb.com/CMGT235/DIS21/VAVR-8W4MEX_R1_EN.pdf)
 
-![data-center-generator](Figures/data-center-generator.png) [Backup diesel generators lie in wait.](https://csdieselgenerators.com/why-a-standby-data-center-generator-is-critical/)
+The data center building has multiple data halls, and each data hall [has](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) multiple pods, each with its own dedicated low-voltage switchgear and generator. The switchgear distributes, protects, and meters power; it contains circuit breakers, metering components, relays, current and voltage transformers, a switch, and cabling. All these components aren't all that important to us - what matters is the scale and materiality of the processes we are working with. Alongside this switchgear is a diesel generator which can take over in the case of an outage. Data centers store 24 to 48 hours of fuel at full load - at every outage, we are burning diesel!
+
+![data-center-generator.png](Figures/data-center-generator.png) 
+[Backup diesel generators lie in wait.](https://csdieselgenerators.com/why-a-standby-data-center-generator-is-critical/)
 
 Downstream from the switchgear is a bank of batteries, which [take over instantly](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) in the case of an outage until the generators turn on and reach full capacity in 60 seconds. Then, at rack level, the power is distributed either through an overhead busway (a solid bar of conducting metal, preferred for high power) or through flexible power cables. Each rack has its own vertical power distribution unit (PDU) connected to the servers; in practice, each has two, for 2N distribution redundancy.
 
-![redundant_power_system](Figures/redundant_power_system.jpg)
- [2N redundant power distribution system.](https://ifp.org/how-to-build-an-ai-data-center/)
+![redundant_power_system.jpg](Figures/redundant_power_system.jpg) 
+[2N redundant power distribution system.](https://ifp.org/how-to-build-an-ai-data-center/)
 
 Here, too, a lot of energy efficiency improvements have been made between traditional and modern data centers. The computers themselves [have become](https://ifp.org/how-to-build-an-ai-data-center/) more efficient: AC-DC rectifiers, which used to be the main source of inefficiency, are [close](https://www.vertiv.com/498eac/globalassets/documents/white-papers/98_percent_efficiency_esure_white_paper_253412.pdf) to their theoretical limit. Chips can now ramp down when idle, and smaller transistors have also helped. Meta's Open Compute Project [features](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/) a power shelf with a single rectifier for the entire rack, which requires custom server design. These power shelves can also incorporate their own battery unit, eliminating the need for a central battery and halving the total battery capacity needed, but also requiring fire suppression in the racks.
 
-![efficient_rectifiers](Figures/efficient_rectifiers.png) [Efficiency trends for modern rectifiers.](https://www.vertiv.com/498eac/globalassets/documents/white-papers/98_percent_efficiency_esure_white_paper_253412.pdf)
+![efficient_rectifiers.png](Figures/efficient_rectifiers.png) 
+[Efficiency trends for modern rectifiers.](https://www.vertiv.com/498eac/globalassets/documents/white-papers/98_percent_efficiency_esure_white_paper_253412.pdf)
 
 These efficiency trends look good, and have probably saved us quite a few greenhouse gas emissions. But exactly how impactful have they been?
+
+## Data center architecture: networking
+A data center couldn't function without data. And to carry all that data, networks are required, facilitating transfer from outside, to outside, and within the data center. However, the type of network itself depends on what kind of workload the data center handles. We can differentiate between typical data centers that are used for video streaming, simulations, or data storage, and data centers built specifically for AI training workloads.
+
+Classic data centers have historically relied on a [spine and leaf topology](https://newsletter.semianalysis.com/p/google-apollo-the-3-billion-game), also known as a Clos configuration. In this topology, each rack of servers is connected to its own top-of-rack (ToR) switch. Several ToR switches feed into various aggregation layers, which are themselves connected with various segments of the spine. This spine, also known as an electronic packet switch (EPS), is the central network of the data center. Various [incremental improvements](https://newsletter.semianalysis.com/p/google-apollo-the-3-billion-game) have been made to this basic structure, as well as the performance of individual components. However, worryingly, increasing EPS performance has resulted in doubling or even tripling of energy consumption for networking.
+
+
+![traditional_network.jpg](Figures/traditional_network.jpg) 
+[A typical spine and leaf topology for data center networks.](https://newsletter.semianalysis.com/p/google-apollo-the-3-billion-game)
+
+This kind of architecture works when we're talking about individual compute operations that need to be done in parallel, as is often done for regular workloads. However, there are cases when this doesn't hold, such as AI workloads, which require scaling out GPU-to-GPU communications across thousands of racks.
+
+In a data center specifically catered for AI training or inference, we can define [three networking layers](https://newsletter.semianalysis.com/p/ai-neocloud-playbook-and-anatomy): the frontend Ethernet network, the backend network, and the out-of-band management network. The frontend network handles internet connection and workload management, for example through Slurm. The out-of-band network monitors server health and controls cooling and power, so it doesn't need any serious hardware. In contrast, the backend handles the actual workload sharing between nodes, so there's a lot of optimization and thought that goes into it. As these architectures mature, various improvements appear, such as [integrating](https://www.nokia.com/asset/214186/) the frontend and backend networks in clever ways.
+
+![ai_networking.png](Figures/ai_networking.png) 
+[Backend networks are used for AI training, while frontend networks are used for inference.](https://www.nokia.com/asset/214186/)
+
+Regardless of the architecture and use-case of the network, one thing is clear: enormous amounts of cables, switches, and controllers are required to meet a data center's computing demand. In designing networks, there are always trade-offs: for example, [increasing server density](https://semianalysis.com/2024/10/14/datacenter-anatomy-part-1-electrical/ ) by bringing everything closer together will allow you to use copper instead of fiber optics for data transmission, but will increase your need for cooling. Sustainability is not often taken into account in these trade-offs.
 
 # Data center impacts
 In what follows, we will take a look at the energy, carbon, water, and material footprint of the data center industry, as well as on its impact on communities. Importantly, we will not only string a sequence of numbers on the screen, but also focus on how researchers have arrived at these figures; otherwise said, not only what the impacts are, but also how we can measure them ourselves.
@@ -109,15 +149,18 @@ A frequent estimate that has been thrown around is Alex de Vries' [3Wh of energy
 
 The carbon footprint of a data center is dependent on [three factors](https://www.climatiq.io/blog/measure-greenhouse-gas-emissions-carbon-data-centres-cloud-computing): the electricity consumption required to run its servers, the water consumption required to cool them down, and the lifetime of the equipment (which affects the frequency of manufacturing new replacements). Let's take a look at two methodologies which attempt to calculate this carbon footprint.
 
-![data_center_emissions](Figures/data_center_emissions.png) [How data centers produce emissions during operation.](https://arxiv.org/abs/2411.09786)
+![data_center_emissions.png](Figures/data_center_emissions.png) 
+[How data centers produce emissions during operation.](https://arxiv.org/abs/2411.09786)
 
 Our first method comes from a [large-scale 2024 assessment](https://arxiv.org/abs/2411.09786) of the environmental impact of data centers in the United States. Researchers identified and validated individual data center demand, found which power plants supplied electricity to each data center, identified the share of electricity supplied by each power plant and the fuel used to produce this electricity, and attributed the resulting emissions to each data center. They also made a neat [map](https://analysis-1.maps.arcgis.com/apps/dashboards/abc6fbecb1904325bd734392f47a7850) of these data centers.
 
-![us_data_center_fuel_mix](Figures/us_data_center_fuel_mix.png) [Energy mix estimate for US data centers.](https://arxiv.org/abs/2411.09786)
+![us_data_center_fuel_mix.png](Figures/us_data_center_fuel_mix.png) 
+[Energy mix estimate for US data centers.](https://arxiv.org/abs/2411.09786)
 
 The study found that the aggregated energy consumption of the data centers they included in the analysis was almost 5% of the country's total 2022 energy production. The average carbon intensity of a data center was estimated to be 548 gCO2-eq/kWh, about 50% percent higher than the national average, leading them to conclude that data centers are usually found in areas with more fossil-heavy energy sources. As the figure above shows, fossil fuels accounted for more than 50% of their energy consumption.
 
-![data_center_us](Figures/data_center_us.png) [Data center-related emissions in megatons CO2.](https://arxiv.org/abs/2411.09786)
+![data_center_us.png](Figures/data_center_us.png) 
+[Data center-related emissions in megatons CO2.](https://arxiv.org/abs/2411.09786)
 
 Because this method is attributional (using external data and attributing the results to each data center), it was necessary to make quite a few assumptions which could significantly influence their results. The researchers assumed a utilization of 0.75 for all data centers, did not account for whether data centers where colocated or hyperscale, and estimated the power capacity of several data centers based on their size where data was not available. Notably, this methodology only calculates the operational, energy-related carbon footprint of data centers, because data on the internal components is simply not available. 
 
@@ -127,7 +170,8 @@ The same group of researchers did [something similar](https://doi.org/10.1038/s4
 
 Another earlier [study](https://doi.org/10.1016/j.joule.2022.02.005) from 2021 had applied this methodology to the entire world, finding that the carbon footprint of Bitcoin mining was comparable to that of the country of Greece in 2021. In 2019, Bitcoin mining was banned in China, so miners migrated to Kazakhstan and the United States, with the share of natural gas in the electricity mix of the industry doubling and higher-emitting plants being used. These estimates are already dated, so the carbon footprint of the industry may have increased in the meantime.
 
-![bitcoin_emissions](Figures/bitcoin_emissions.png) [The carbon footprint of Bitcoin and its geographical distribution.](https://doi.org/10.1016/j.joule.2022.02.005)
+![bitcoin_emissions.png](Figures/bitcoin_emissions.png) 
+[The carbon footprint of Bitcoin and its geographical distribution.](https://doi.org/10.1016/j.joule.2022.02.005)
 
 Our second methodology comes from the open-source [Cloud Carbon Footprint](https://www.cloudcarbonfootprint.org/docs/) (CCF) project. This tool can be used by someone using cloud services to estimate their environmental impact. In the process, it takes cloud provider usage data (compute, storage, networking), converts it into energy consumption, and then estimates the power usage effectiveness of the cloud provider's data centers and the carbon intensity of the region where the data center pulls power from. The emissions estimate is then calculated according to
 $$
@@ -144,12 +188,16 @@ $$
 
 The CCF team uses [various estimates](https://www.cloudcarbonfootprint.org/docs/methodology) for the grid emissions factors and the [manufacturing-related emissions](https://www.cloudcarbonfootprint.org/docs/embodied-emissions) for computing hardware. This means that the results obtained with this methodology will not be perfectly equal to the real emissions, but it is a useful first step given the lack of transparency of cloud providers.
 
-![ccf_methodology](Figures/ccf_methodology.png) [CCF methodology for estimating data center emissions.](https://www.climatiq.io/blog/how-to-measure-carbon-footprint-cloud-computing-onpremise-hybrid-computing-infrastructure)
+![ccf_methodology.png](Figures/ccf_methodology.png) 
+[CCF methodology for estimating data center emissions.](https://www.climatiq.io/blog/how-to-measure-carbon-footprint-cloud-computing-onpremise-hybrid-computing-infrastructure)
+
+While these formulas can be applied to most computing applications, there are some edge cases (literally!) where they don't hold. For example, if designing a wildlife observation system that relies on edge AI inference, all your energy is probably going to be generated by a solar panel attached to your camera, which means you're not connected to the grid and have no operational emissions. Evidently, you still have to think about the embedded emissions for the camera, processor, comms equipment, solar panel, and battery (as well as all the emissions to transport your system, manage its end-of-life phase and so on).
 
 ## The water footprint of data centers
 Data centers are doing no better on the water front. Sadly, we once again have to rely on [estimates](https://iopscience.iop.org/article/10.1088/1748-9326/abfba1) for the United States, which find that data centers are among the top ten water-consuming activities in the country, with a fifth of data centers drawing from already stressed watersheds. Latin America has also been the [target](https://jacobin.com/2024/06/ai-data-center-energy-usage-environment) of significant data center development, with some facilities being set up around [drought-vulnerable](https://edition.cnn.com/2024/02/25/climate/mexico-city-water-crisis-climate-intl/index.html) Mexico City.
 
-![water_footprint](Figures/water_footprint.png)[Direct (used for cooling) and indirect (used by power plant generating electricity) water footprint of US data centers in 2018.](https://iopscience.iop.org/article/10.1088/1748-9326/abfba1)
+![water_footprint.png](Figures/water_footprint.png) 
+[Direct (used for cooling) and indirect (used by power plant generating electricity) water footprint of US data centers in 2018.](https://iopscience.iop.org/article/10.1088/1748-9326/abfba1)
 
 Same as for carbon emissions, cloud providers do not usually report their water consumption and the water stress levels of the areas their centers find themselves in. Therefore, researchers are once again forced to estimate the water footprint of data centers from first principles. To give you an idea of how this is done, we will follow along with a similar [methodology](https://arxiv.org/abs/2306.16668) to the ones above, based on a paper from a few years ago.
 
@@ -158,7 +206,8 @@ $$
 W(M) = W_{\text{on}}(M) + W_{\text{off}}(M)
 $$
 
-![water_usage](Figures/water_usage.png) [Calculating the water footprint of a data center.](https://arxiv.org/abs/2306.16668)
+![water_usage.png](Figures/water_usage.png) 
+[Calculating the water footprint of a data center.](https://arxiv.org/abs/2306.16668)
 
 The on-site water consumption is then [calculated](https://arxiv.org/abs/2306.16668) as a function of the energy use for the compute job and the water usage effectiveness of the data center during this job. 
 $$
@@ -183,7 +232,8 @@ We will see in Lecture 6 that the materiality of electronics is important. GPU's
 
 Once again, data center operators are tight-lipped about the lifetime of their servers, though servers usually get [switched out](https://www.climatiq.io/blog/measure-greenhouse-gas-emissions-carbon-data-centres-cloud-computing) every 3 to 5 years. Because of the miniaturized components, all this computing equipment tends to eschew recycling and join the fast growing e-waste stream. Globally, [62 million tons of e-waste were produced in 2022](https://unitar.org/about/news-stories/press/global-e-waste-monitor-2024-electronic-waste-rising-five-times-faster-documented-e-waste-recycling), and [70%](https://www.popsci.com/where-do-recycled-electronics-go/) of the toxic waste in US landfills is e-waste. All computing equipment has the potential to [threaten](https://www.who.int/news-room/fact-sheets/detail/electronic-waste-%28e-waste%29) health and the environment if its end-of-life is not handled properly.
 
-![e_waste](Figures/e_waste.png) [Most e-waste is either landfilled or not recycled in an environmentally sound manner.](https://unitar.org/about/news-stories/press/global-e-waste-monitor-2024-electronic-waste-rising-five-times-faster-documented-e-waste-recycling)
+![e_waste.png](Figures/e_waste.png) 
+[Most e-waste is either landfilled or not recycled in an environmentally sound manner.](https://unitar.org/about/news-stories/press/global-e-waste-monitor-2024-electronic-waste-rising-five-times-faster-documented-e-waste-recycling)
 
 Of course, as we saw before, data centers are more than just computers. They involve electrical systems, cooling systems, and all the construction and infrastructure required to keep them functioning. Data center construction requires carbon-intensive materials such as concrete and steel, and up to [a third](https://www.datacenterdynamics.com/en/analysis/sustainable-data-centers-require-sustainable-construction/) of data center emissions are embedded in the physical infrastructure. This means that a continued build-up of data centers can shift the discussion away from sustainable operations and towards sustainable construction practices.
 
@@ -192,7 +242,8 @@ We went through some of the global impacts of data centers as an industry. But t
 
 As we saw above, most of the energy powering data centers comes from fossil fuels. Even though the smokestacks of coal and gas power plants have been equipped with scrubbers and other equipment to reduce pollution, they still produce significant emissions of fine particle air pollution such as PM2.5, which are associated with [significant health risks](https://doi.org/10.1016/j.envadv.2024.100603). If data centers keep a fossil fuel power plant running, the air pollution from this plant is attributed to those data centers. The researchers studying the carbon footprint of Bitcoin mining above also evaluated the attributed PM2.5 pollution, and found that [46 million Americans](https://doi.org/10.1038/s41467-025-58287-3) living in 27 states had been exposed to measurable concentrations of Bitcoin mine-related pollution between 2022 and 2023.
 
-![bitcoin_pollution](Figures/bitcoin_pollution.png) [Additional ambient PM2.5 pollution attributable to Bitcoin mines.](https://doi.org/10.1038/s41467-025-58287-3)
+![bitcoin_pollution.png](Figures/bitcoin_pollution.png) 
+[Additional ambient PM2.5 pollution attributable to Bitcoin mines.](https://doi.org/10.1038/s41467-025-58287-3)
 
 It's clear that what we consider environmental impacts are also local impacts on the communities that live close to data centers. The groundwater in a certain basin is not infinite, and unchecked consumption for data center cooling [depletes aquifers](https://iopscience.iop.org/article/10.1088/1748-9326/abfba1), risking that locals remain without water for agriculture, amenities, or even household activities and drinking. 
 
@@ -202,7 +253,8 @@ However, there are a few special interests, such as large industrial users, that
 
 Data centers are such customers, because they offer a stable income and consumption for years. This consumption needs to be [accommodated](https://eelp.law.harvard.edu/extracting-profits-from-the-public-how-utility-ratepayers-are-paying-for-big-techs-power/) with new infrastructure, so, to make it more enticing for the data center operator, suppliers sweeten the deal by offloading the cost of the new infrastructure on existing customers (you). The new infrastructure also needs to be maintained and then eventually dismantled. Finally, data centers can eat up power generation capacity from local low-cost energy sources such as nuclear plants, which once again increases the cost of electricity for the average consumer.
 
-![trade_offer](Figures/trade_offer.png) A bad deal.
+![trade_offer.png](Figures/trade_offer.png) 
+A bad deal.
 
 ## Industry trends
 The current environmental and human impacts of the data center industry do not paint a rosy picture. Well, at least we can be optimistic for the future, right?
@@ -211,26 +263,30 @@ Every single estimate for the data center industry growth shows a continuous inc
 
 Let's compare some projections of data center power consumption between 2024 and 2030. Goldman Sachs (which, remember, is a bank, so they [aren't supposed to be following unfounded hype](https://www.forbes.com/sites/halahtouryalai/2011/04/14/criminal-charges-loom-for-goldman-sachs-after-scathing-senate-report/)) sees non-cryptocurrency data center power demand growing between [80 and 240 percent by 2030](https://www.goldmansachs.com/insights/goldman-sachs-research/gs-sustain-generational-growth-ai-data-centers-global-power), with the United States seeing the share of power demand from data centers growing from 3% to 8%. Only 20% of this growth is expected to be derived from AI-related workloads. Other estimates, for example based on the expected production of AI chips, give much [sharper increases](https://ifp.org/future-of-ai-compute/) to equivalent to the power consumption of Japan.
 
-![demand_growth](Figures/demand_growth.png)
+![demand_growth.png](Figures/demand_growth.png) 
 [Data center power demand growth for AI technologies.](https://ifp.org/future-of-ai-compute/)
 
 These divergent estimates result from different assumptions on the growth of AI technologies. If we look at the recent growth in the amount of compute required for frontier AI models, such as OpenAI's GPT-3 and GPT-4, it becomes clear that the amount of compute follows a more or less [quintupling scaling law](https://ifp.org/future-of-ai-compute/), growing roughly 5x per year. This growth is driven by better hardware and data availability, which means that it is possible that a lack of appropriate training data will trigger a crisis for growth. There is no consensus on this issue at the moment. 
 
-![compute_quintupling](Figures/compute_quintupling.png) [The amount of training compute for frontier models has been increasing tremendously.](https://ifp.org/future-of-ai-compute/)
+![compute_quintupling.png](Figures/compute_quintupling.png) 
+[The amount of training compute for frontier models has been increasing tremendously.](https://ifp.org/future-of-ai-compute/)
 
 Energy efficiency trends are unfortunately not keeping up. Between 2015 and 2019, the power demand of data centers was [flat](https://www.goldmansachs.com/insights/goldman-sachs-research/gs-sustain-generational-growth-ai-data-centers-global-power) even though workload increased three times, because annual energy efficiency gains were about 15%. However, these efficiency gains have collapsed to 2-4% per year, and even though there are still some interesting efficiency increases such as the latest [NVIDIA DGX systems](https://www.goldmansachs.com/insights/goldman-sachs-research/gs-sustain-generational-growth-ai-data-centers-global-power), even these cannot catch up with the growth in demand caused by AI training and inference. And when compared to the compute trends above, even the best possible improvements in hardware utilization and longer training times will only reduce the required data throughput by 11 times, which offsets [a mere 18 months](https://ifp.org/future-of-ai-compute/) of demand for compute increases.
 
-![efficiency_trend](Figures/efficiency_trend.png) [Projected data center power demand growth and decreasing efficiency gains.](https://www.goldmansachs.com/insights/goldman-sachs-research/gs-sustain-generational-growth-ai-data-centers-global-power)
+![efficiency_trend.png](Figures/efficiency_trend.png) 
+[Projected data center power demand growth and decreasing efficiency gains.](https://www.goldmansachs.com/insights/goldman-sachs-research/gs-sustain-generational-growth-ai-data-centers-global-power)
 
 Until now, the largest data centers had tens of thousands of GPUs and power consumption to the order of tens of megawatts. Now, clusters ten times bigger are building built, and companies are even [planning](https://ifp.org/future-of-ai-compute/) gigawatt-level data centers. These projects would be so large that they could not be set up in a single building (nor could they be supported by a single power grid), so they would be split up into campuses connected by wide-area networks. To this end, data center builders have already started to [reserve](https://ifp.org/future-of-ai-compute/) significant fractions of global fiber cable manufacturing capacity. 
 
-![data_center_campus](Figures/data_center_campus.png) [Planned Microsoft/OpenAI data center campus.](https://ifp.org/future-of-ai-compute/)
+![data_center_campus.png](Figures/data_center_campus.png) 
+[Planned Microsoft/OpenAI data center campus.](https://ifp.org/future-of-ai-compute/)
 
 Building a data center is not a particularly difficult endeavor as far as construction goes (they are warehouses, after all), but building all the power generation for this data center boom is sure to give utilities a headache. The buildout of renewable energy is [projected to not keep up](https://heated.world/p/ai-is-guzzling-gas) with demand, so companies are turning to rapid gas plant buildout instead.
 
 Even recent data centers have stopped waiting for grid interconnection and have chosen to deploy [trailer-mounted gas turbines](https://ifp.org/future-of-ai-compute/) 'behind-the-meter', while several coal and gas plants that were slated for dismantling [are kept online](https://jacobin.com/2024/06/ai-data-center-energy-usage-environment) to power incoming data centers. Furthermore, fossil fuel companies like Exxon and Chevron are themselves [expanding](https://heated.world/p/ai-is-guzzling-gas) gas sales and power plant construction to capitalize on the new demand.
 
-![gas_turbines](Figures/gas_turbines.png) [xAI's data center uses 14 mobile natural gas generators.](https://ifp.org/future-of-ai-compute/)
+![gas_turbines.png](Figures/gas_turbines.png) 
+[xAI's data center uses 14 mobile natural gas generators.](https://ifp.org/future-of-ai-compute/)
 
 Even though we already saw that data centers are not the cleanest industry, this parallel buildup of fossil fuel infrastructure means that they are slowing the transition to green energy and slated to increase their carbon emissions to even more unsustainable levels. It is clear that we need serious, effective solutions, and fast.
 
@@ -242,37 +298,53 @@ As we saw, hyperscale data centers tend to be less impactful due to economies of
 
 The problem is that these data centers still need to run continuously to accommodate varying demand for compute from all their customers, so the other solutions we will be talking about are going to be less effective. In any case, consolidating computing resources decreases the number of power electronics or redundant cooling and cabling infrastructure required.
 
-![hyperscale_efficiency](Figures/hyperscale_efficiency.png)[Comparing hyperscale, colocated, and on-prem data center environmental footprints.](https://www.climatiq.io/blog/measure-greenhouse-gas-emissions-carbon-data-centres-cloud-computing)
+![hyperscale_efficiency.png](Figures/hyperscale_efficiency.png) 
+[Comparing hyperscale, colocated, and on-prem data center environmental footprints.](https://www.climatiq.io/blog/measure-greenhouse-gas-emissions-carbon-data-centres-cloud-computing)
 
 Another relevant aspect to the desirability of this centralization is where all these hyperscale data centers are found. On one hand, if cloud computing is displaced to [strategic regions](https://arxiv.org/abs/2408.08203), with desirable geographic, climatic, and demographic aspects, then we can reduce the compute-related energy and water consumption and maximize free, environmental cooling. On the other hand, if we just build them where it is cheapest, we might just compound the problem. 
 
-## 2. On-demand and edge computing
-A company's [cloud strategy](https://www.climatiq.io/blog/9-ways-reduce-computing-carbon-footprint) is also important. For example, you can get rid of idle or unused virtual machines, and work on-demand to only consume resources while the service is in use. Server loads are critical to maximizing energy efficiency. This is not only because you can make maximum use of renewable energy, but also because the power electronics in the data center are more efficient at higher utilization. 
+## 2. Cloud strategy
+It's also important to think about how we use cloud computing resources. Data center operators like AWS [typically divide the responsibility](https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/the-shared-responsibility-model.html) between the operator, who does what they can to make their data centers sustainable, and the customer, who does what they can to reduce their use of computing resources. 
 
-This is why bundling up compute loads in a few heavy periods is more efficient than allowing the server to run continuously at low utilization. [Smart scheduling](https://cloud.google.com/blog/topics/sustainability/reduce-your-cloud-carbon-footprint-with-active-assist) allows you to batch jobs and run code only during periods of high utilization, allowing the server to shut down rather than run continuously at low utilization. [Edge computing](https://www.climatiq.io/blog/9-ways-reduce-computing-carbon-footprint), which happens at or near where data is produced, requires less energy to move data back and forth between the client and servers, and may produce fewer resulting emissions.
+At a minimum, practically ever cloud services provider offers a sustainability-oriented platform. AWS offers emissions tracking, while Microsoft Azure offers [carbon optimization](https://learn.microsoft.com/en-us/azure/carbon-optimization/overview) ('based on AI-generated suggestions') and Google Cloud offers smart scheduling. However, most of the work to optimize the code towards sustainability still has to be done by the user. Let's take a look at some suggestions AWS gives on how to reduce cloud computing resources.
 
-![Supporting_sustainability_with_Active_Assi.max-1100x1100](Figures/Supporting_sustainability_with_Active_Assi.max-1100x1100.png)[Google Cloud has started to integrate smart scheduling within its Active Assist portfolio.](https://cloud.google.com/blog/topics/sustainability/reduce-your-cloud-carbon-footprint-with-active-assist)
+![Supporting_sustainability_with_Active_Assi.max-1100x1100.png](Figures/Supporting_sustainability_with_Active_Assi.max-1100x1100.png) 
+[Google Cloud has started to integrate smart scheduling within its Active Assist portfolio.](https://cloud.google.com/blog/topics/sustainability/reduce-your-cloud-carbon-footprint-with-active-assist)
 
-However, we need to note that every electronic component can reasonably satisfy only a set number of on/off cycles (power cycling) before it starts experiencing [thermal stress](https://learning-oreilly-com.tudelft.idm.oclc.org/library/view/upgrading-and-repairing/9780132682152/ch18.html) due to expansion and compression. This means that, if you only use a server for, say, eight hours a day at full utilization and then turn it off, you might be wearing it out more than if it had been running for twenty-four hours at partial utilization. 
+The principal [trade-off](https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/sus_sus_user_a3.html) for a commercial computing workload has three directions: performance (latency, quality-of-service), complexity (number of concurrent users), and sustainability impact (required computing resources). At a high level, high-importance services will typically demand more resources to maximize performance, but lower-priority services could be allowed to receive a lower quality-of-service so as to save resources. 
+
+![latency_vs_complexity.png](Figures/latency_vs_complexity.png) 
+[Architecting software now involves going beyond the classic performance-complexity trade-off.](https://doi.org/10.1109/APWiMob.2016.7811451)
+
+In general, solutions focus on ensuring that user-facing performance is only as good as it needs to be, and no better. Sometimes, this means [adjusting the quality of result](https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/sustainability-as-a-non-functional-requirement.html) by removing unnecessary processing and producing the minimum required computed output. Other times, it means flattening demand peaks by [buffering and throttling](https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/sus_sus_user_a7.html) user demand, therefore spreading compute resources to a broader period in time. Some quick wins can also be obtained with good foreknowledge of what computing resources are required and when: rather than keeping idle resources online for redundancy (static stability), you can predictively scale the resources you use ([dynamic scaling](https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/sus_sus_user_a2.html)) or use scaling-by-design architectures like serverless.
+
+Power electronics are designed to be most efficient at high levels of data center utilization, so strategies that maximize utilization, like smart scheduling of tasks, can help. Tasks could also be scheduled during periods of [high renewable energy generation](https://www.climatiq.io/blog/9-ways-reduce-computing-carbon-footprint), like the middle of the day in a solar-heavy region. This means trading off some response time by processing requests [in batch](https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/sus_sus_software_a2.html) and handling asynchronous processes through queues. 
+
+![sync-vs-async-schema.jpg](Figures/sync-vs-async-schema.jpg) 
+[Handling asynchronous processes with queues could reduce required computing resources.](https://www.koyeb.com/blog/introduction-to-synchronous-and-asynchronous-processing)
+
+As discussed above, users of cloud computing services can also pick which locales they want their workloads or data to be handled in. There's a neat trade-off here too. [Edge computing](https://www.climatiq.io/blog/9-ways-reduce-computing-carbon-footprint), which happens at or near where data is produced, requires less energy to move data back and forth between the client and servers, and may produce fewer resulting emissions. However, keeping workloads in regions closer to renewable energy might also reduce the grid carbon intensity.
+
+While running workloads in batch improves utilization, it also involves the electronic components turning on and off more than they would if they were kept online all the time. Every component can reasonably satisfy only a set number of on/off cycles (power cycling) before it starts experiencing [thermal stress](https://learning-oreilly-com.tudelft.idm.oclc.org/library/view/upgrading-and-repairing/9780132682152/ch18.html) due to expansion and compression. This means that, if you only use a server for, say, eight hours a day at full utilization and then turn it off, you might be wearing it out more than if it had been running for twenty-four hours at partial utilization. 
+
+![Power-cycling-test-and-measured-parameters_W640.jpg](Figures/Power-cycling-test-and-measured-parameters_W640.jpg) 
+[Power cycling experiments involve consecutive heating and cooling of components.](https://www.researchgate.net/publication/363848105_Condition_monitoring_indicators_for_Si_and_SiC_power_modules)
 
 Even though there are robust separate bodies of research on both [lifetime estimation through power cycling](https://doi.org/10.1016/j.microrel.2019.113460) and on [lifecycle assessment of electronics](https://ieeexplore.ieee.org/document/10173462), we haven't found any work on using power cycling models to compare partial and full utilization from a lifecycle perspective. So you could be the one to combine these fields in your thesis!
-
-![Power-cycling-test-and-measured-parameters_W640](Figures/Power-cycling-test-and-measured-parameters_W640.jpg) 
-[Power cycling experiments involve consecutive heating and cooling of components.](https://www.researchgate.net/publication/363848105_Condition_monitoring_indicators_for_Si_and_SiC_power_modules)
 
 ## 3. Renewable energy and demand response
 Another important aspect is the use of renewable energy. Renewable energy sources [do not emit greenhouse gases](https://climate.mit.edu/explainers/renewable-energy) during operation, and as such all data centers should run off renewables. However, renewable energy's main problem is that of [intermittency](https://climate.mit.edu/explainers/renewable-energy): due to varying solar illumination and wind speeds, generation is not as stable as for traditional fossil-fueled plants.
 
 There are two ways that this could be addressed. First, the [learning curves](https://caseyhandmer.wordpress.com/2024/03/12/how-to-feed-the-ais/) for both solar PV and large-scale batteries are quite favorable, which means that, if current trends continue, we will soon see data centers powered by solar-battery systems, maybe even disconnected from the grid. Second, data centers could apply demand response strategies; this could mean timing high utilization periods to the middle of the day, when solar energy is abundant, as well as shutting down servers if the grid is overburdened.
 
-![solar-pv-prices-vs-cumulative-capacity](Figures/solar-pv-prices-vs-cumulative-capacity.png)
+![solar-pv-prices-vs-cumulative-capacity.png](Figures/solar-pv-prices-vs-cumulative-capacity.png) 
 [Learning curve for solar PV (note logarithmic abscissa).](https://ourworldindata.org/grapher/solar-pv-prices-vs-cumulative-capacity)
 
 A proposed solution is the use of parallelizable computing loads as variable demand that balances the renewable energy grid: for example, [some researchers](https://doi.org/10.1109/SusTech63138.2025.11025705) propose pooling Monte Carlo compute jobs into bundles that are actively placed in periods when energy is cheap and abundant. Rather than transport energy physically to every data center, data is more cheaply transported to whichever data center has access to the cheapest energy. 
 
 However, compute jobs need to fulfil certain criteria to be used like this: they need to have low quality of service (no requirement for uninterruptible power supply), allow for pause and delay, and lack strong privacy or security requirements. Moreover, the implementation of such a system assumes that jobs can simply migrate from data center to data center, but the current data center economy is organized around contracts between operators (who manage the actual, physical data center) and users, which means that we would need a decentralized platform that can distribute these jobs on a national/continental/global scale.
 
-![demand_response](Figures/demand_response.png)
+![demand_response.png](Figures/demand_response.png) 
 [Various versions of demand response: load shifting and load smoothing.](https://ieeexplore.ieee.org/document/6742689)
 
 ## 4. Server replacement
@@ -285,14 +357,14 @@ There are also novel cooling architectures that rely on [liquids](https://doi.or
 
 These [liquid-based cooling architectures](https://doi.org/10.1038/s41586-025-08832-3) are definitely more energy-efficient than air-cooling, up to 50 percent more in the case of immersive cooling. However, they come with significant drawbacks. Firstly, you do have to make use of water, even though most of it can be kept in a closed cycle with minimal losses. Secondly, the coolant you have to use is not the most environmentally-friendly substance itself, and may even contain soon-to-be-banned PFAS (forever chemicals). Thirdly, a lot of these methods are still in development, so their costs have not yet been brought down by learning curves. Finally, immersing chips in liquid runs the risk of flooding said chips and leads to difficulties in performing maintenance or switching components.
 
-![liquid_cooling](Figures/liquid_cooling.png)
+![liquid_cooling.png](Figures/liquid_cooling.png) 
 [Three types of liquid cooling: cold plate, one-phase and two-phase immersion systems.](https://doi.org/10.1038/s41586-025-08832-3)
 
 Another interesting cooling strategy that has recently entered commercial application is [geothermal cooling](https://cleantechnica.com/2025/03/28/can-geothermal-cooling-tame-data-centers-energy-appetite/). At depths of 15 to 250 meters, the underground temperature is between 10 and 15 degrees Celsius, which can be effectively used by [digging boreholes and pumping warm water](https://open.library.ubc.ca/media/stream/pdf/24/1.0395216/4) from the data center to cool down. 
 
 Depending on where you dig (for example, [Equinix](https://www.datacenterknowledge.com/cooling/equinix-is-latest-to-adapt-ground-water-for-cooling) has a geothermally-cooled data center in Amsterdam), geothermal cooling can cut your cooling bills by nearly half - and therefore significantly improve your power usage efficiency. However, geothermal cooling [may sometimes not be competitive](https://pangea.stanford.edu/ERE/pdf/IGAstandard/SGW/2018/Zurmuhl.pdf) with current cooling methods due to its high installation costs, compensating for its low operating costs.
 
-![geothermal_cooling](Figures/geothermal_cooling.png)
+![geothermal_cooling.png](Figures/geothermal_cooling.png) 
 [Working principle of a geothermal cooling system. Note redundant cooling well.](https://open.library.ubc.ca/media/stream/pdf/24/1.0395216/4)
 
 ## 6. Waste heat reuse
@@ -302,14 +374,14 @@ An interesting [framework](https://www.researchgate.net/publication/221230056_En
 
 These same researchers, for example, developed a [prototype](https://www.researchgate.net/publication/221230056_Environmentally_Opportunistic_Computing_transforming_the_data_center_for_economic_and_environmental_sustainability) distributed container-based data center that performs computations for the university while connected to a greenhouse. It allows computing jobs to migrate from personal workstations to a traditional data center to the prototype through the internet, and jobs within the prototype servers are batched and timed according to the greenhouse's temperature requirements: machines idle as the afternoon sun warms up the greenhouse, while jobs return in the cooler evening. This idea also found purchase in the Netherlands, which is rich in horticulture; a startup called [BlockHeating](https://shiftlimburg.nl/en/cases/blockheating-benefits-residual-heat-datacenters-for-heating-greenhouses) uses the same principle to warm up water for the greenhouses. 
 
-![Sustainable-Distributed-Data-Center-Concept_W640](Figures/Sustainable-Distributed-Data-Center-Concept_W640.jpg)
+![Sustainable-Distributed-Data-Center-Concept_W640.jpg](Figures/Sustainable-Distributed-Data-Center-Concept_W640.jpg) 
 [Sustainable distributed data center prototype connected to a greenhouse.](https://www.researchgate.net/publication/221230056_Environmentally_Opportunistic_Computing_transforming_the_data_center_for_economic_and_environmental_sustainability)
 
 An important obstacle to waste heat reuse is the demand profile of heating applications. There are very few activities that require a temporally-constant amount of heat. If we want to supply heat to, say, a neighborhood, we can only do so when they need that heat. Even so, there are several places in the world where tech giants have connected their data centers to local heat distribution networks, also called district heating.
 
 For example, [Meta](https://tech.facebook.com/engineering/2020/07/odense-data-center-2/) (née Facebook) built a custom data center in Odense, Denmark, which is powered by renewable energy and recovers its waste heat through heating coils to a local heat pump. The heat is then more cheaply upgraded by the heat grid operator and sent out to the buildings in Odense. This data center was estimated by the company to reduce the city's demand for coal by up to 25%. While this is definitely on the upper end of Meta's data centers, and is undeniably a PR move for the company, it is also a great example of what could be achieved. Similar developments have been pursued by [Amazon](https://reasonstobecheerful.world/data-center-heat-green-energy/) and [Apple](https://www.computerweekly.com/news/366623832/Apple-to-play-modest-role-after-datacentre-heat-breakthrough-in-Denmark). There is another obstacle that we need to take into account here: usually, heat demand comes in the form of high value heat, around 50 degrees Celsius. However, data centers provide low value heat around 30-40 degrees Celsius. This means that the heat provided needs to be further upgraded to be of use.
 
-![1920x1080-Odense-Data-Center-e1593797624401](Figures/1920x1080-Odense-Data-Center-e1593797624401.jpg)
+![1920x1080-Odense-Data-Center-e1593797624401.jpg](Figures/1920x1080-Odense-Data-Center-e1593797624401.jpg) 
 [Odense data center waste heat recovery.](https://tech.facebook.com/engineering/2020/07/odense-data-center-2/)
 
 ## The EcoDataCenter
@@ -317,7 +389,7 @@ We've already seen some examples of the sustainability solutions we've discussed
 
 They also claim to deliver waste heat to both district heating and industry needs, and have installed flexible cooling systems that can switch to dry cooling in periods of drought. Their electrical architecture is specially designed to increase the operating capacity from 50% to 75%, reducing the absolute number of power electronics components required. They also use water tanks as thermal buffers, allowing for cooling when energy is cheap and abundant (such as in the middle of the day with solar PV). 
 
-![ecodatacenter](Figures/ecodatacenter.png)
+![ecodatacenter.png](Figures/ecodatacenter.png) 
 [EcoDataCenter's first building was constructed in wood.](https://businessfocusmagazine.com/2023/02/20/ecodatacenter-critical-data-infrastructure/)
 
 ## Conclusions
@@ -326,7 +398,7 @@ One important thing to note is that all our discussions so far have been focused
 The problem is that there aren't really technical solutions to this problem. The driving force of the build-out of data centers around the world is related to the business models of the companies which bankroll this build-out. Growth in the abundance of digital services, large language models, and associated applications is continuous, and, at the moment, seems to be exponential. The technical levers we as engineers have at our disposal are insufficient to contain this exponential growth, which may inconsistent with an [energy-constrained society](https://dothemath.ucsd.edu/2011/10/the-energy-trap/) on a finite planet. This means that, if ICT systems are to fit within a sustainable society, they may need to be addressed through policy levers.
 
 # Feedback
-We are happy to receive any feedback you may have on this lecture. Is there too much information in the slides/notes, or would you like to know more about a certain topic? Please let us know by [**filling in this form**](https://forms.cloud.microsoft/e/yNfYwQKM2X).
+We are happy to receive any feedback you may have on this lecture. Is there too much information in the slides/notes, or would you like to know more about a certain topic? Please let us know by [**filling in this form**](https://forms.cloud.microsoft/e/z0RAAw1Ld5).
 
 # Further reading
 Want to know more about the topics in this lecture? Here are some sources that didn't quite make the cut.

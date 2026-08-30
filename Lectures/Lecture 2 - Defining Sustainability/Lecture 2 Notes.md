@@ -1,4 +1,4 @@
-`Version: 1.0`
+`Version: 1.1`
 `Contributors: Alex Nedelcu`
 `Publication date: 11.09.2025`
 
@@ -36,7 +36,7 @@ Another way that researchers usually look at sustainability is through the use o
 
 Up until now, we have been discussing environmental sustainability, which aims to ensure that the natural resources that humanity has access to are managed in a way that does not infringe upon future generations' access to these same resources. Let's also take a look at what the other pillars of sustainability entail.
 
-![Diagramme_de_Venn_du_développement_durable.svg](Figures/Diagramme_de_Venn_du_d%C3%A9veloppement_durable.svg.png)
+![Diagramme_de_Venn_du_développement_durable](Figures/Diagramme_de_Venn_du_développement_durable.svg.png)
 [Three pillars of sustainability.](https://en.wikipedia.org/wiki/Sustainability#/media/File:Diagramme_de_Venn_du_d%C3%A9veloppement_durable.svg)
 
 Economic sustainability refers to economic policies that support long-term job creation, profitability, and viability without present-day damage. [Some sources](https://www.re-thinkingthefuture.com/sustainable-architecture/a13634-the-three-pillars-of-sustainability-environmental-economic-and-social-sustainability/) state that economic sustainability is about sustainable long-term growth, but that is [increasingly debated](https://theconversation.com/idea-of-green-growth-losing-traction-among-climate-policy-researchers-survey-of-nearly-800-academics-reveals-213434) as structural limits to growth have started to emerge. Another interesting aspect of economic sustainability is fighting against the over-burdening of future generations, for example through [debt crises](https://en.wikipedia.org/wiki/Debt_crisis), [generational accounting](https://en.wikipedia.org/wiki/Generational_accounting#), or increasing [dependency ratios](https://en.wikipedia.org/wiki/Dependency_ratio).
@@ -45,7 +45,7 @@ Social sustainability [refers to](https://en.wikipedia.org/wiki/Sustainability#S
 
 All definitions of sustainability have these three dimensions interconnected. Some, in addition, have the environmental dimension as [principal and overarching](https://en.wikipedia.org/wiki/Sustainability#Hierarchy) (because the natural system contains the human system), with economic sustainability being nested within social sustainability. Otherwise said, the economic system is part of the social system, and the social system is part of the environmental system. If this is the case, then the environmental dimension sets limits to economic and social development.
 
-![Nested_sustainability-v2.svg](Figures/Nested_sustainability-v2.svg.png)
+![Nested_sustainability-v2](Figures/Nested_sustainability-v2.svg.png)
 [Hierarchy of the dimensions of sustainability.](https://en.wikipedia.org/wiki/Sustainability#/media/File:Nested_sustainability-v2.svg)
 
 In this course, we are generally going to focus on environmental sustainability. This is, on one hand, because one could dedicate one's life to how ICT systems affect each dimension of sustainability, but also because, as written above, environmental sustainability is of principal concern when discussing the impact of human systems. 
@@ -85,22 +85,35 @@ It should be noted that studying the planetary system is a very complex and diff
 ![precautionary-principle_med](Figures/precautionary-principle_med.jpeg)
 [Burden of proof vs precautionary principle.](https://old-ib.bioninja.com.au/standard-level/topic-4-ecology/44-climate-change/precautionary-principle.html)
 
-In order to actually measure the physical impacts of human society on the natural systems, several tools have been developed. Substance flow analysis (SFA) and [**material flow analysis](https://link-springer-com.tudelft.idm.oclc.org/chapter/10.1007/978-1-4020-9158-2_12) (MFA)** calculate how individual substances, such as carbon, nitrogen, or phosphorus, as well as materials, such as steel, chlorine, or plastics, travel through the world. Otherwise said, they are systematic assessments of the flows and stocks of materials within a system defined in space and time. 
+In order to actually measure the physical impacts of human society on the natural systems, several tools have been developed. For example, substance flow analysis (SFA) and [**material flow analysis](https://link-springer-com.tudelft.idm.oclc.org/chapter/10.1007/978-1-4020-9158-2_12) (MFA)** are analytical methods that researchers use to quantify the flows of physical substances and materials through a defined economic unit, like a company, a country, or a geographic area. SFA and MFA work with material flows, which are typically dynamic, and stocks, which are typically static. For example, steel 'flows' through the economy from extraction to processing, use, and reuse, and eventually ends up back as a 'stock' in the environment, for example in a landfill. If we look at a single substance, we can develop a pretty good understanding of the flows and stocks in the economic and natural system; this was done in an SFA study in the 1980's for cadmium, as seen below.
 
 ![mfa](Figures/mfa.png)
 [An example of material flow analysis: global cadmium flows in the 1980's.](https://thecitywasteproject.files.wordpress.com/2013/03/practical_handbook-of-material-flow-analysis.pdf)
 
+But how does this actually apply to the ICT sector? Well, there are increasingly many studies being done on the material flows involved in ICT technologies. For example, a [2023 study](https://doi.org/10.1016/j.jclepro.2023.139706) investigated the material aspects of phone recycling. What happens when a 'kilogram of phone' (which is how these inputs are usually represented) gets dismantled? The figure below shows that half its weight in plastics goes to landfill, together with 12% in batteries and 7% in mixed waste. A small fraction of iron scrap is sent out to be reused, and the PCBs, which represent 28% of the weight, are sent to be further processed. This is how we can quantify both flows (for example, the PCB and scrap iron) and stocks (for example, the landfilled waste) of materials.
+
+![mfa_phones](Figures/mfa_phones.png)
+[Material flow analysis for recycling of phones.](https://doi.org/10.1016/j.jclepro.2023.139706)
+
 ## Environmental footprints and lifecycle analysis
 Central to the planetary boundaries framework is the idea of environmental footprint. The **[environmental footprint](https://sci-hub.st/https://www.science.org/doi/10.1126/science.1248365)** quantifies the total human pressure on the natural environment. It is the sum of the total footprints (carbon footprint, land footprint, energy footprint, water footprint, material footprint etc.) of each individual product or activity in human society. The total environmental footprint measures how much of the [available capacity within the planetary boundaries](https://sci-hub.st/https://doi.org/10.1038/s41893-018-0021-4) is already consumed.
 
-Each type of footprint is usually calculated through the use of a [**lifecycle analysis](https://link-springer-com.tudelft.idm.oclc.org/chapter/10.1007/978-1-4020-9158-2_12) (LCA)**. This is a quantitative tool for environmental assessment of products over their lifetime. In a lifecycle analysis, every single activity involved in the manufacturing of an item, or provision of a service, is evaluated, and the environmental impact for each tiny little step is measured through a number of indicators, such as global warming potential, human toxicity, and so on. We'll get back to these indicators later. For now, to give you an example of how a lifecycle assessment works in practice, we can take a look at an ICT product that you have probably heard about: the Fairphone. 
+Each type of footprint is usually calculated through the use of a [**lifecycle analysis](https://link-springer-com.tudelft.idm.oclc.org/chapter/10.1007/978-1-4020-9158-2_12) (LCA)**. This is a quantitative tool for environmental assessment of products over their lifetime. In a lifecycle analysis, every single activity involved in the manufacturing of an item, or provision of a service, is evaluated, and the environmental impact for each tiny little step is measured through a number of indicators, such as global warming potential, human toxicity, and so on. We'll get back to these indicators later. For now, let's take a look at what actually goes on inside a lifecycle analysis. In the figure below, you can see the 'unit processes' taken into account for the lifecycle analysis of a lightbulb. To produce copper and glass, as well as process them into a bulb, and to use and then discard the bulb, various inputs are required, such as fuel, electricity, and raw materials.
 
 ![lca](Figures/lca.png)
 [Flow chart presenting the lifecycle of an incandescent lightbulb.](https://link.springer.com/content/pdf/10.1007/978-1-4020-9158-2_18)
 
-Fairphone organized a [lifecycle analysis](https://www.fairphone.com/wp-content/uploads/2020/07/Fairphone_3_LCA.pdf) for their Fairphone 3 product. This LCA assessed the phone's environmental impact and studied several impact categories: climate change, fossil fuel use, material use, and human and ecological toxicity. The assessment split the lifecycle into several phases: production (which includes material sourcing), transport, use, and end of life. 
+For LCA to have a clear starting point, one needs to define a clear 'function' for the product. For example, when it comes to a laptop, the function could be 'use of a laptop for 5 years'. All environmental impacts that take place during the laptop's lifetime (all economic and environmental processes) are then related to this function. For this example, the lifecycle of the laptop can be seen in the figure below. 
 
-As the bar chart below shows, the highest impact is of course coming from the production phase, which involves obtaining raw materials, processing them, assembly, and everything else that is required to get the phone out of the factory door. Some impacts are also attributed to the use phase: for example, when you charge the phone, you are relying on electricity generated by, for example, a natural gas plant, which emits carbon into the atmosphere. The lifecycle analysis also divided these impacts per component of the phone, and also attributed some impacts to all components that help the Fairphone be modular, which is its main selling point.
+![laptop_lca](Figures/laptop_lca.png)
+[Processes involved in the lifecycle of a laptop.](https://www.semanticscholar.org/paper/Screening-life-cycle-assessment-of-a-laptop-used-in-Grzesik-Wojtysiak-Kukli%C5%84ski/9a25f84b527fbd825f14a77de144f00e0ad565f5)
+
+
+To give you an example of how a lifecycle assessment works in practice, we can take a look at an ICT product that you have probably heard about: the Fairphone. The company organized a [lifecycle analysis](https://www.fairphone.com/wp-content/uploads/2020/07/Fairphone_3_LCA.pdf) for their Fairphone 3 product. This LCA assessed the phone's environmental impact and studied several impact categories: climate change, fossil fuel use, material use, and human and ecological toxicity. The assessment split the lifecycle into several phases: production (which includes material sourcing), transport, use, and end of life. 
+
+To quantify the inputs for the Fairphone 3, the researchers used the bill of materials of the product, a well as the material compositions of several components as provided by suppliers. They then verified this with a teardown of the phone. They quantified the product's components by weight and area: 190.4 grams for the entire phone, of which 18.5 grams for the mainboard, 63.4 grams for the display module, 50.4 grams for the battery etc. Each module was included into the life cycle inventory of the product. 
+
+The outcomes of the study are shown below. When it comes to global warming potential, most of the environmental impacts occur during production. Some impacts are also attributed to the use phase: for example, when you charge the phone, you are relying on electricity generated by a natural gas plant, which emits carbon into the atmosphere. The lifecycle analysis also divided these impacts per component of the phone. Component-wise, the impacts are usually dominated by the core module, because it takes the most emissions and resources to produce. The researchers also investigated which parts of the core module are the most impactful and found that the PCB and the RAM&flash memory are very important. 
 
 ![fairphone_lca](Figures/fairphone_lca.png)
 [Relative impact for each lifecycle phase for the Fairphone 3.](https://www.fairphone.com/wp-content/uploads/2020/07/Fairphone_3_LCA.pdf)
@@ -108,7 +121,7 @@ As the bar chart below shows, the highest impact is of course coming from the pr
 ## Sustainability indicators
 Up until now we have seen both the planetary boundaries framework and the environmental footprint framework. These are both very useful in helping us conceptualize sustainability, but, as you might have noticed, they also feature so many sustainability indicators! There is no universal standard on how to measure sustainability, so every discipline has developed several competing indicators. For now, we'll take a look at the ones that are used the most, and then leave you with some resources for more in-depth perspectives. But first, to clarify, an indicator represents a quantitative or qualitative measure of how close we are to a target measure (for example, achieving a set objective).
 
-[What-are-the-most-used-economic-indicators-by-investors](Figures/What-are-the-most-used-economic-indicators-by-investors.avif)
+![What-are-the-most-used-economic-indicators-by-investors](Figures/What-are-the-most-used-economic-indicators-by-investors.avif)
 [Economic indicators.](https://www.strike.money/fundamental-analysis/economic-indicators)
 
 We use sustainability indicators to measure the impact of human activities on the planet. To make a clear distinction, we'll divide them by field of interest: emissions, materials, energy, and water.
@@ -118,13 +131,12 @@ The principal indicator that we will constantly return to is the [global warming
 
 The global warming potential is a multiple of the warming caused by the same mass of carbon dioxide (which has a GWP of 1). The GWP can be used to [calculate](https://en.wikipedia.org/wiki/Global_warming_potential#) the carbon dioxide equivalent (CO2-eq), or the mass of CO2 that would warm the Earth as much as the mass of that gas. When we want to calculate the impact of an activity on climate change, whether it be a product like a phone, or a system like a data center, we rely on this simple indicator of CO2-equivalent emissions to calculate a carbon intensity.
 
-![ict_device_emissions](Figures/ict_device_emissions.png)
+![ict_device_emissions.png](Figures/ict_device_emissions.png)
 [Lifecycle emissions of electronic devices in kgCO2-eq](https://unctad.org/publication/digital-economy-report-2024)
 
 Before we continue to some other environmental indicators, we need to go on a little tangent about [carbon accounting](https://en.wikipedia.org/wiki/Carbon_accounting), which is used to track the emissions of a certain organization. There are many frameworks and standards for emissions reporting, allocation, and data collection and use. For example, the [GHG Protocol](https://ghgprotocol.org/) was developed by the World Resources Institute, while [ISO 14064](https://en.wikipedia.org/wiki/ISO_14064) was published by the International Organization of Standardization based on it. The United States' Environmental Protection Agency (supposing it still exists at time of presentation) has its own [GHG Reporting Program](https://www.epa.gov/ghgreporting/what-ghgrp), while European industries covered by the Emissions Trading Scheme [follow its Monitoring and Reporting Regulation](https://climate.ec.europa.eu/eu-action/eu-emissions-trading-system-eu-ets/monitoring-reporting-and-verification_en), and the Netherlands also has an [Emissions Authority](https://www.emissionsauthority.nl/topics/reporting) monitoring emissions within its borders.
 
-
-![Scope3_Calculation_Guidance_-updated](Figures/Scope3_Calculation_Guidance_-updated.png)
+![Scope3_Calculation_Guidance_-updated.png](Figures/Scope3_Calculation_Guidance_-updated.png)
 [Scope 1, 2, and 3 for emissions reporting.](https://en.wikipedia.org/wiki/Carbon_footprint#/media/File:Scope3_Calculation_Guidance_-updated.png)
 
 Let's take a [practical look at how companies go about emissions reporting](https://kpmg.com/xx/en/our-insights/ifrg/2024/handbook-ghg-protocol.html) when they follow the Greenhouse Gas Protocol. First, they define an organizational boundary that covers all the activities owned or controlled by the company. Then, they classify sources of emissions according to three scopes:
@@ -133,7 +145,7 @@ Let's take a [practical look at how companies go about emissions reporting](http
 - Scope 2: indirect emissions representing energy that is generated outside the organizational boundary, such as electricity, heat, steam, or cooling, but are purchased and consumed by the company.
 - Scope 3: indirect emissions that occur outside the organizational boundary, but are part of the company's upstream or downstream value chain. The upstream emissions are related to the purchase of goods and services for use by the company, while the downstream emissions are related to the use of goods and services by the company. Some examples of upstream emissions are employee commuting, waste generated in operations, and capital goods, while some downstream emissions are processing, use, and end-of-life treatment of sold products.
 
-![emissions_reporting](Figures/emissions_reporting.png)
+![emissions_reporting.png](Figures/emissions_reporting.png)
 [Practical distinction between Scope 1, 2, and 3 emissions.](https://kpmg.com/xx/en/our-insights/ifrg/2024/handbook-ghg-protocol.html)
 
 The company then calculates its total emissions for each scope by multiplying its activities by the carbon intensity (emission factor) of each activity, and tracks them in relation to emissions targets, for example on a yearly basis. 
@@ -143,11 +155,19 @@ $$
 The emissions data is placed inside a GHG inventory, which is reported to the responsible authorities. These calculations are never 100% precise, due of the possibility of real uncertainties in activity data and emission factors (which are taken from standard databases) on one hand and sometimes malicious misreporting on the other. Unless specific standards are imposed by the regulating authority, companies can sometimes play with the numbers (for example, by using different accounting methods) to [underreport their emissions](https://www.ucl.ac.uk/news/2025/feb/inconsistent-reporting-leads-underestimation-climate-impact-methane) and seem more sustainable. This is why frameworks like the EU Emissions Trading Scheme focus on compliance and emissions audits.
 
 ### 2. Material intensity
-One large impact of society on the planet is the continuous extraction of materials for human use. The European Union's [3rd Raw Materials Scoreboard](https://op.europa.eu/en/publication-detail/-/publication/eb052a18-c1f3-11eb-a925-01aa75ed71a1) shows that global material use, including biomass, fossil fuels, metal ores, and non-metallic minerals, has probably exceeded 90 billion tons. The EU also [recognizes](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:52020DC0474) several [critical raw materials](https://sci-hub.st/https://www.sciencedirect.com/science/article/pii/S0301420717300223?via%3Dihub#bib18) which are characterized by their supply risk and economic importance. These critical raw materials are [important](https://ec.europa.eu/docsroom/documents/42881/attachments/1/translations/en/renditions/native) for renewable energy, electric vehicles, but also batteries and digital technologies, which are of particular importance for ICT systems. 
+One large impact of society on the planet is the continuous extraction of materials for human use. The European Union's [3rd Raw Materials Scoreboard](https://op.europa.eu/en/publication-detail/-/publication/eb052a18-c1f3-11eb-a925-01aa75ed71a1) shows that global material use, including biomass, fossil fuels, metal ores, and non-metallic minerals, has probably exceeded 90 billion tons. The EU also [recognizes](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:52020DC0474) several [critical raw materials](https://sci-hub.st/https://www.sciencedirect.com/science/article/pii/S0301420717300223?via%3Dihub#bib18) which are characterized by their supply risk and economic importance.
+
+![crms_phones.png](Figures/crms_phones.png)
+[Critical raw materials required for smartphones, tablets, and laptops.](https://publications.jrc.ec.europa.eu/repository/handle/JRC132889)
+
+These critical raw materials are [important](https://ec.europa.eu/docsroom/documents/42881/attachments/1/translations/en/renditions/native) for renewable energy, electric vehicles, but also batteries and digital technologies, which are of particular importance for ICT systems. We will discuss these aspects at greater length during Lecture 6. For now, suffice to say that your phone requires a multitude of substances and materials, as shown in the figure below.
+
+![materials_in_a_phone.png](Figures/materials_in_a_phone.png)
+[Material composition of a typical mobile phone.](https://doi.org/10.1016/j.jclepro.2023.138099)
 
 Beyond the metals required for e.g. lithium-ion batteries, data storage technologies such as HDD's RAM, flash memory and phase-change memory are [projected](https://www.sciencedirect.com/science/article/pii/S2214993717301252) to heavily increase in use, leading to more consumption of platinum, neodymium, cobalt, rubidium, chromium, selenium and many many other critical raw materials. To measure the consumption of materials, we use an indicator of material intensity, which shows the quantity of material per unit of capacity or per technology.
 
-![material_footprint](Figures/material_footprint.png)
+![material_footprint.png](Figures/material_footprint.png)
 [Material intensity for different memory technologies in tons per zettabyte.](https://ec.europa.eu/docsroom/documents/42881/attachments/1/translations/en/renditions/native)
 
 ### 3. Energy intensity
@@ -155,7 +175,7 @@ But to make a hard drive disk we don't only need the materials inside, we also n
 
 There [are several ways to measure this energy](https://ourworldindata.org/energy-definitions). First, we can take a look at the primary energy: the energy found in nature, inside inputs that have not been processed by humans, with examples being the chemical energy inside wood, coal, or oil. But we can also look at the useful energy, which is put to the desired output of the application, such as the electricity that powers a lightbulb or the heat from wood burnt in a fireplace. Both of these can be used to calculate the (primary) energy intensity of a product of service: how many units of energy are required to power it per unit of output? 
 
-[w=1350 4](Figures/w%3D1350%204.avif)
+![w=1350_4.avif](Figures/w=1350_4.avif)
 [Primary, secondary, final, and useful energy.](https://ourworldindata.org/energy-definitions)
 
 ### 4. Water intensity
@@ -163,8 +183,13 @@ Then, there is water. Human life cannot continue without water. Therefore, hydro
 
 For our more modest purposes, we will focus on a more instrumental indicator that can be applied to ICT systems: the humble water intensity. Otherwise said, we measure how much water is consumed for a certain product or process, while noting that: a) not all water used is consumed, and some is returned to the hydrological cycle, and b) not all water is created equal, with pure water being polluted to become grey water.
 
-![Metro_WaterFootprint_final](Figures/Metro_WaterFootprint_final.jpg)
+![Metro_WaterFootprint_final.jpg](Figures/Metro_WaterFootprint_final.jpg)
 [Water footprint of various products and services.](http://sncyear7geography.weebly.com/water-footprint.html)
+
+Calculating the water intensity (or specific water consumption) in the ICT sector is not very easy, because data is scarce. A study from 2019 attempted to calculate the water intensity for the manufacturing of various components, such as logic, memory, and flash devices. They found that most of the water for the fabrication of such semiconductors is not required for the actual processes themselves, but is actually used to cool down electricity generation plants (we will discuss this at greater length during Lecture 5). For example, they find that producing one square centimeter of logic circuit wafer requires 7.8 liters of water.
+
+![water_withdrawal_semiconductors.png](Figures/water_withdrawal_semiconductors.png)
+[Total water withdrawal for semiconductor fabrication.](https://doi.org/10.1016/j.wri.2019.100115)
 
 ### 5. Others
 Finally, there is everything else. Researchers have developed indicators for [biodiversity](https://www.sciencedirect.com/science/article/abs/pii/S0169534716300222#bib0090), for [ocean acidification](https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system/synthesis/surface-oa-indicators.html), and for every other aspect of human intervention in the natural system that we are aware of. You are free to take a look, but we will not be using other indicators than the four discussed in detail above in this course.
@@ -178,65 +203,47 @@ Another important framework for sustainability that we will take a look at in th
 
 Now, what are some common principles that we can see in these perspectives on the circular economy?
 
-![illustration-blog-circular-economy2@2x](Figures/illustration-blog-circular-economy2%402x.webp)
+![illustration-blog-circular-economy2@2x.webp](Figures/illustration-blog-circular-economy2@2x.webp)
 [Circular vs linear economy.](https://blog.sendle.com/guide-to-circular-economy)
 
 The [butterfly diagram](https://www.ellenmacarthurfoundation.org/circular-economy-diagram) developed by the Ellen MacArthur Foundation shows that the circular economy aims to design systems for reuse, sharing, repair, refurbishment and recycling that ultimately reduce human impacts on the environment. You are definitely used to the three R's ("reduce, reuse, recycle"), so you'll be happy to know that there are now nine (or sometimes ten) R's: refuse, rethink, reduce, reuse, repair, refurbish, remanufacture, repurpose, recycle, and recover. Deliberate, reflective design is applied for both products and activities to make them circular at every stage of the lifecycle.
 
-![Butterfly_Diagram](Figures/Butterfly_Diagram.webp)
-[The butterfly diagram of circular economy.](https://www.ellenmacarthurfoundation.org/circular-economy-diagram)
+![r_ladder_ce.png](Figures/r_ladder_ce.png)
+[The R-ladder in a circular economy.](https://inchainge.com/knowledge/sustainability/the-value-hill-circular-economy/)
 
 Now, the idea of a circular economy sounds great in theory, but we need to remain critical and realistic. The circular economy aims to maintain our mode of economic organization, and still aims to support economic growth. Even though it recognizes the need for an energy transition, maintaining economic growth in itself will require [enormous increases in energy supplies](https://www.carbone4.com/en/publication-decoupling) due to [GDP-energy coupling](https://www.tandfonline.com/doi/full/10.1080/08911916.2020.1778866). 7% growth per year would mean economic growth of a factor of 1000 in a hundred years, and will need the energy from all incoming solar radiation hitting the Earth in 105 years.
 
 Another criticism is that circularity can only be obtained by prolonging the lifetime of products. Is this really a problem? Well, fewer of them need to be produced, which means that fewer manufacturing jobs are required! This could be a problem, unless we realize that we are obtaining the same welfare with less work. But where are these welfare gains going? These are complex problems to sort out.
 
-![gdp_coupling](Figures/gdp_coupling.png)
+![gdp_coupling.png](Figures/gdp_coupling.png)
 [Relative decoupling between GDP growth, energy consumption, and emissions.](https://www.carbone4.com/en/publication-decoupling)
 
-One important point to keep in mind is that the circular economy focuses a lot on physical materials rather than energy. Of course, researchers involved in studying the circular economy recognize that we need to switch from carbon emitting fossil fuels to renewables, and reduce their energy intensity. But there is a great practical problem that appears when you reduce the material or energy intensity of a product: its cost goes down. Sounds great, until you realize that, if cost goes down, more people purchase the product. As such, it may be that, even though the per-product material or energy intensity goes down, the industry-wide footprint increases! This is the foundation of the [rebound effect](https://en.wikipedia.org/wiki/Rebound_effect_(conservation)#).
+One important point to keep in mind is that the circular economy focuses a lot on physical materials rather than energy. Of course, researchers involved in studying the circular economy recognize that we need to switch from carbon emitting fossil fuels to renewables, and reduce their energy intensity. But there is a great practical problem that appears when you reduce the material or energy intensity of a product: its cost goes down. Sounds great, until you realize that, if cost goes down, more people purchase the product. As such, it may be that, even though the per-product material or energy intensity goes down, the industry-wide footprint increases! This is the foundation of the [rebound effect](https://en.wikipedia.org/wiki/Rebound_effect_(conservation)#), which we already discussed during Lecture 1.
 
-![869432e5-0c97-41c2-a751-b672a6c0971e_3333x1776](Figures/869432e5-0c97-41c2-a751-b672a6c0971e_3333x1776.jpg)
+![869432e5-0c97-41c2-a751-b672a6c0971e_3333x1776.jpg](Figures/869432e5-0c97-41c2-a751-b672a6c0971e_3333x1776.jpg)
 [Rebound effect.](https://sociallifeofenergy.substack.com/p/why-efficiency-wont-save-us)
 
 In any case, we will be keeping in mind the principles of the circular economy as we continue to discuss sustainable ICT systems in the following lectures of this course.
 
-## Digital sufficiency
-The final framework we will go through today is that of digital sufficiency. Unlike the others presented above, [digital sufficiency](http://dx.doi.org/10.1007/s12243-022-00914-x) was specifically developed by a multinational, multidisciplinary team from several European universities to think about sustainability in ICT systems. 
+# ICT systems and social sustainability
+Earlier, we defined social sustainability as the ability of society to continue existing without structural obstacles. Our modern society is intertwined with ICT systems, so if we are to become socially sustainable, we will naturally have to deal with their impacts.
 
-But first, what exactly does sufficiency mean? We define it in contrast to other strategies to achieve sustainability:
+But what do we use ICT systems for? Currently:
+1. ICT systems facilitate many societal functions, such as communication, administration, and entertainment.
+2. ICT systems represent the main method for access to information for many people. In most countries, a strong majority gets its news online, as found by the [Reuters Institute 2025 Digital News Report](https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2025/dnr-executive-summary).
+3. ICT systems facilitate the automation of labor, which improves [productivity](https://www.ecb.europa.eu/pub/pdf/scpops/ecb.op339~f67b6981a9.en.pdf) and therefore societal well-being.
+4. ICT systems store zettabytes of personal, commercial, and public information.
 
-1. Consistency: doing things better, for example by reusing a waste stream and closing nutrient cycles in a circular economy.
-2. Efficiency: doing more with less, for example by reducing the carbon or material intensity of a product or service.
-3. Sufficiency: reducing total demand for resources and energy while still keeping well-being constant.
+![social_media_news.png](Figures/social_media_news.png)
+[In some countries, a plurality of people now get their news predominantly from social media.](https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2025)
 
-As you may have noted, the concept of sufficiency is very similar to our own definition of sustainable ICT systems. Digital sufficiency is itself [defined](http://dx.doi.org/10.1007/s12243-022-00914-x) as 'directly or indirectly decreasing the absolute level of resource and energy demand from the production or application of ICT'. 
+This means that the direction of our society is now shaped by the ICT systems that underlie it. For example, the electricity grid is controlled digitally, so its control systems become critical infrastructure vulnerable to sabotage. The same can be said for public transport, administrative services, and international communications. Of course, digitalization also democratizes access to and generation of information - for better or worse. Content recommendation algorithms can be used to steer public opinion, which has effects on the political direction of society. Therefore, these algorithms can be designed to be negatively biased and [increase polarization](https://journals.sagepub.com/doi/10.1177/08944393221149290), or to improve [social discussion](https://nyaspubs.onlinelibrary.wiley.com/doi/full/10.1111/nyas.15359). 
 
-The environmental impacts from ICT use in human society can be positive or negative, and they are classified as direct, relating to device manufacturing and electricity demand, or indirect, resulting from the various social changes that happen due to the introduction of ICT systems. For example, making processes in other industries more efficient through digitalization is a positive indirect effect, while creating the possibility for people to store data on the cloud and increase the volume of data they use is a negative indirect effect.
+Another way in which we are dependent on ICT systems is related to the way we store our information. Centralized storage empowers those who own the physical infrastructure, whether it be private companies (which can use the data for profit) or state actors (as other states [become dependent on them](https://www.nu.nl/tech/6384112/kan-de-vs-straks-meekijken-met-digid-hier-is-al-vaak-voor-gewaarschuwd.html)). Finally, digitalization has become increasingly important for [large-scale surveillance and militarization](https://futurism.com/government-ice-palantir).
 
-Digital sufficiency aims to address both direct and indirect effects, and it has four interconnected dimensions.
+What becomes clear is that it is not only important **how** we design ICT systems (energetically and materially efficient, repairable, sustainable), but also **what** - and especially **who** - we design them for. Progress in the field of ICT has a [human cost](https://www.youtube.com/watch?v=ucl6yBFKnBQ&t=392) that needs to be reckoned with.
 
-### 1. Hardware sufficiency
-We would expect hardware efficiency to mean reducing the amount of materials and energy we need to produce a certain device, or to mean increasing its energy efficiency. In contrast, [hardware sufficiency](http://dx.doi.org/10.1007/s12243-022-00914-x) means being able to produce fewer devices, designing them to last longer, ensuring that they are the right tool for the job and no more, and therefore keeping their energy demand at the absolute minimum required to perform the tasks they need to do.
-
-If we extend their useful life, for example by designing repairable and upgradable devices (for example, through modular design), fewer new devices will need to be produced. If we design devices for recycling at the end-of-life, for example by using mechanical connectors like screws instead of glue, we can improve the recovery of resources and need fewer virgin extraction. Smaller devices may also be sufficient - why buy a desktop when a laptop can do the job?
-
-We can talk about nice design practices all we want, but unless they are applied in real life, it's all bunk. At a societal level, we should have standards for long-lasting hardware, low-energy consumption, avoiding critical and hazardous materials, and encouraging recycling. Manufacturers should eliminate early obsolescence and offer repair and upgrade services and provide software updates until the end of a device's physical lifetime. These strategies are not only technical - they are also economic and political, same as everything else related to sustainability.
-
-### 2. Software sufficiency
-As you will see in the lecture on designing sustainable software, efficient software reduces both electricity consumption and hardware utilization for each unit of compute. In contrast, [sufficient software](http://dx.doi.org/10.1007/s12243-022-00914-x) aims to minimize these in absolute terms, for example by reducing total data volume and traffic. 
-
-Software can and should be programmed so as to minimize absolute energy demand: default settings for minimum energy consumption, limiting the extent of forced connectivity, applying open standards, and mitigating hardware obsolescence by ensuring backward compatibility. A sufficiency stand on software would lean towards maintenance of existing software rather than on constant novelty.
-
-### 3. User sufficiency
-[User sufficiency](http://dx.doi.org/10.1007/s12243-022-00914-x) is a bit more nebulous than the former two concepts, but it is necessary if we want to achieve social sustainability. When investigating user impacts, we need to think both about how ICT itself is used (for example, the number of devices, the intensity, and the duration) and about what it's used for. Applying user sufficiency means, on one hand, applying digital devices frugally (do we need an account for the washing machine?) and, on the other hand, using them to promote sustainable lifestyles and help users reduce their consumption needs while maintaining a good quality of life.
-
-### 4. Economic sufficiency
-Improving the economic efficiency of ICT systems means maximizing economic outputs with scarce resource and energy inputs. In contrast, [economic sufficiency](http://dx.doi.org/10.1007/s12243-022-00914-x) would use digitalization to support the transition to an economy characterized not by economic growth as primary imperative but by sufficient production and consumption to serve societal and individual needs. This is more on the social side, and involves using ICT improvements in productivity to reduce our need to work, as well as using ICT systems for cooperation and services rather than monopolist platforms.
-
-![digital_sufficiency](Figures/digital_sufficiency.png)
-[The four dimensions of digital sufficiency acting in concert.](http://dx.doi.org/10.1007/s12243-022-00914-x)
-
-## Applications to ICT systems
+# Applications to ICT systems
 In this lecture, we've gone through a whirlwind of information about sustainability and how we can think about it both as a concept and as something to be measured. We won't be having you perform lifecycle analysis for your phones in this course. That's the job of very smart people in [Industrial Ecology](https://studiegids.universiteitleiden.nl/en/courses/123916/lca-practice-reporting). But we will be applying the perspectives in this lecture to the more 'rich' ICT topics in the following lectures. 
 
 1) We will be thinking about how we can design software to run more efficiently so that we can consume less energy doing so.
@@ -244,10 +251,10 @@ In this lecture, we've gone through a whirlwind of information about sustainabil
 3) We will be thinking about AI and whether it will help or harm our efforts towards sustainability.
 4) We will be studying the material intensity of electronics and how we can deliberately design electronics to reduce their reliance on critical raw materials.
 
-For all these topics, it will be important to keep in mind the frameworks we discussed today. The planetary boundaries should act as constraints for everything we set out to do as we aim for a circular economy, with our environmental footprint being measured with the many indicators that we saw in the lecture. The final objective, of course, is digital sufficiency: reducing the absolute impact of ICT systems on the environment.
+For all these topics, it will be important to keep in mind the frameworks we discussed today. The planetary boundaries should act as constraints for everything we set out to do as we aim for a circular economy, with our environmental footprint being measured with the many indicators that we saw in the lecture.
 
 # Feedback
-We are happy to receive any feedback you may have on this lecture. Is there too much information in the slides/notes, or would you like to know more about a certain topic? Please let us know by [**filling in this form**](https://forms.cloud.microsoft/e/28PK4pSGgW).
+We are happy to receive any feedback you may have on this lecture. Is there too much information in the slides/notes, or would you like to know more about a certain topic? Please let us know by [**filling in this form**](https://forms.cloud.microsoft/e/z0RAAw1Ld5).
 
 # Further reading
 Want to know more about the topics in this lecture? Here are some sources that didn't quite make the cut.
@@ -266,8 +273,3 @@ Want to know more about the topics in this lecture? Here are some sources that d
 - [DelftX Circular Economy MOOC](https://www.edx.org/learn/circular-economy/delft-university-of-technology-circular-economy-an-introduction): a free TU Delft online course on the principles, implementation, and critiques of circular economy.
 - [National Circular Economy Programme 2023-2030](https://www.government.nl/documents/reports/2023/09/27/national-circular-economy-programme-2023-2030): the Netherlands' official agenda to reach a circular economy by 2030.
 - [Netherlands Circularity Gap](https://www.circularity-gap.world/netherlands): a report on what measures need to be implemented to improve the circularity of the Dutch economy.
-
-## Digital sufficiency
-- [Digital Reset](https://digitalization-for-sustainability.com/digital-reset/): a comprehensive report on the need and methods for implementation of digital sufficiency in the world economy.
-- [Digital Sobriety](https://theshiftproject.org/en/publications/lean-ict/): a similar concept to digital sufficiency developed by the Shift Project in France.
-- [Towards a sufficiency-driven business model](https://doi.org/10.1016/j.eist.2015.07.010): a more generalist paper conceptualizing the business models that would be required for a transition towards sufficiency.
