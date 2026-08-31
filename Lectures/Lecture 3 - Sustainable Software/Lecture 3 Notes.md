@@ -29,7 +29,7 @@ This can be used when power is not consistent over time. You average the power i
 
 Average power can easily be converted to energy via the formula:
 $$ E = P_{\text{average}}\Delta t$$
-#### Energy Delayed Product (EDP)
+#### Energy-Delay Product (EDP)
 Next to energy consumption, this metric additionally considers the time taken to run an application. Consequently, it favors applications which minimize energy consumption **and** the runtime.
 $$EDP = E  t =\Delta P  t^2 $$
 
