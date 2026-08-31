@@ -47,58 +47,61 @@ At the end of the course, the student is able to:
 All lectures will be given physically at TU Delft, except for guest lectures which will be given online. There will be no recorded videos of the lectures. The following list provides the structure of the course, mapped to dates, times and location of delivery.
 
 * _03 September 2026 15:45-17:45_
-  * Lecture 1: __[Introduction]()__ 
+  * Lecture 1: __[Introduction](./Lectures)__ 
   	* [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _04 September 2026 15:45-17:45_
   * No lecture
 
 * _10 September 2026 15:45-17:45_
-  * Lecture 2: __[Defining Sustainability]()__
+  * Lecture 2: __[Defining Sustainability](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
+* _11 September 2026 15:45-17:45_
+  * __Assignment Consultation Session (online)__
+
 * _17 September 2026 15:45-17:45_
-  * Lecture 3: __[Sustainable Software]()__
+  * Lecture 3: __[Sustainable Software](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _18 September 2026 15:45-17:45_
-  * Lecture 4.1: __[Sustainable Artificial Intelligence, Part 1]()__
+  * Lecture 4.1: __[Sustainable Artificial Intelligence, Part 1](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
    
 * _24 September 2026 15:45-17:45_
-  * Lecture 4.2: __[Sustainable Artificial Intelligence, Part 2]()__
+  * Lecture 4.2: __[Sustainable Artificial Intelligence, Part 2](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _25 September 2026 15:45-17:45_
-  * Lecture 5.1: __[Sustainable Cloud Computing, Part 1]()__
+  * Lecture 5.1: __[Sustainable Cloud Computing, Part 1](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
    
 * _01 October 2026 15:45-17:45_
-  * Lecture 5.2: __[Sustainable Cloud Computing, Part 2]()__
+  * Lecture 5.2: __[Sustainable Cloud Computing, Part 2](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _02 October 2026 15:45-17:45_
-  * Lecture 6: __[Sustainable Electronics Design]()__
+  * Lecture 6: __[Sustainable Electronics Design](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _08 October 2026 15:45-17:45_
-  * __Group Project Midterm Presentations__
+  * __Assignment Midterm Presentation (in-person)__
   	* [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _09 October 2026 15:45-17:45_
-  * __Group Project Midterm Presentations__ (backup session)
+  * __Assignment Midterm Presentation (in-person, backup session)__
   	* [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _15 October 2026 15:45-17:45_
-  * Lecture 7.1: __[Sustainable Data Storage, Part 1]()__
+  * Lecture 7.1: __[Sustainable Data Storage, Part 1](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
    
 * _16 October 2026 15:45-17:45_
-  * Lecture 7.2: __[Sustainable Data Storage, Part 2]()__
+  * Lecture 7.2: __[Sustainable Data Storage, Part 2](./Lectures)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _22 October 2025 15:45-17:45_
-  * __Group Project Final Presentations__
+  * __Assignment Final Presentation (in-person)__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 ## Assessment
