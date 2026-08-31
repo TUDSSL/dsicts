@@ -13,15 +13,15 @@ The most important and far-reaching impact of humanity on the planet is climate 
 
 Our world economy currently relies on fossil fuels. When these fuels are combusted, they emit gases such as carbon dioxide into the atmosphere. These gases absorb some of the energy emitted by the planet as infrared radiation. This means that, to maintain the energy balance, the planet gets hotter: the greenhouse effect, hence why these gases are called [greenhouse gases](https://climate.mit.edu/explainers/greenhouse-gases). If the planet is hotter, then the atmosphere is also warmer, and can store more water, making weather patterns more unpredictable and extreme - this is what we commonly call climate change.
 
-
-![radiative_forcing](Figures/radiative_forcing.png)[The energy balance within Earth's atmosphere.](https://climate.mit.edu/explainers/radiative-forcing)
+![radiative_forcing](Figures/radiative_forcing.png)
+[The energy balance within Earth's atmosphere.](https://climate.mit.edu/explainers/radiative-forcing)
 
 ## ICT's impacts
 Now, you may think that this has nothing to do with us as software engineers. Software does not exist in the real world; it is ones and zeroes. But every line of code needs a physical processor to run it. That processor needs power electronics and cooling. And you, as a programmer, need a screen, a mouse, a keyboard, and probably a connection to the internet to run the latest version of Copilot. These are all physical objects in the real world, which have an impact on the real world.
 
 Historically speaking, our ICT emissions have grown faster than our total emissions, with global emissions [growing about 20%](https://doi.org/10.1016/j.patter.2021.100340) between 2002 and 2012 and ICT emissions growing about twice as fast. If we look at some estimates from a few years ago, we notice that ICT's greenhouse gas emissions in 2020 [were](https://doi.org/10.1016/j.patter.2021.100340) between 2.1% and 3.9% of total emissions, with a marked acceleration in recent times due to several significant trends. The Internet of Things, the blockchain, the pivot to big data and most recently AI have only accelerated the rate of emissions growth. Not to mention all associated impacts on the water system and consumption of raw materials, which we will discuss in depth in later lectures. 
 
-![ict_growth](Figures/ict_growth.png) 
+![ict_growth](Figures/ict_growth.png)
 [ICT emissions are projected to grow exponentially.](https://doi.org/10.1016/j.patter.2021.100340)
 
 ## Solutions and false solutions
@@ -34,7 +34,8 @@ But there are some important problems with this kind of thinking. Firstly, even 
 
 What's more, despite the enormous efficiency gains that we have seen, demand for both computation and ICT devices has outpaced these energy efficiency improvements - resulting in higher overall energy consumption. This pattern fits with the [rebound effect](https://doi.org/10.1016/j.patter.2023.100679): as a process becomes less energy intensive, it also becomes cheaper, which means that it happens more. We'll talk about it more in Lecture 2. So, even though energy efficiency is important, if it doesn't go directly towards reducing the total consumption, it is not sufficient. We need something else!
 
-![rebound_effect](Figures/rebound_effect.png) [We need to constrain further consumption gains from energy efficiency policies to cap emissions.](https://doi.org/10.1016/j.patter.2023.100679)
+![rebound_effect](Figures/rebound_effect.png)
+[We need to constrain further consumption gains from energy efficiency policies to cap emissions.](https://doi.org/10.1016/j.patter.2023.100679)
 ### 2. Saturation
 Others say that there is an [absolute cap](https://doi.org/10.1016/j.patter.2021.100340) for the total emissions - that is, everyone on Earth might have a smartphone and have their demand for ICT services satisfied. Furthermore, there is a limited amount of time in the day to use your phone, so there exists a theoretical absolute limit to how much energy you can expend. 
 
@@ -76,7 +77,7 @@ Now, how are we doing at the moment? There are three types of decoupling: relati
 For [some](https://www.thelancet.com/journals/lanplh/article/PIIS2542-5196(24)00310-3/fulltext), this has led to questions about whether our current economic system, which is reliant on growth to support itself, is fit for purpose. In this course, we will not worry ourselves with such philosophical questions, but we will note the need to decouple economic processes - like ICT systems! - from energy use and emissions. We will be discussing more about how we can measure this coupling and how we can actually work towards stopping it in the following lectures.
 
 # Feedback
-We are happy to receive any feedback you may have on this lecture. Is there too much information in the slides/notes, or would you like to know more about a certain topic? Please let us know by **[filling in this form](https://forms.cloud.microsoft/e/LpKCQqQtud)**.
+We are happy to receive any feedback you may have on this lecture. Is there too much information in the slides/notes, or would you like to know more about a certain topic? Please let us know by **[filling in this form](https://forms.cloud.microsoft/e/z0RAAw1Ld5)**.
 
 # Further reading
 Want to know more about the topics in this lecture? Here are some sources that didn't quite make the cut.
@@ -92,7 +93,7 @@ Want to know more about the topics in this lecture? Here are some sources that d
 - [Integrative Design for Radical Energy Efficiency](https://integrative-design-for-radical-energy-efficiency.stanford.edu/): a design paradigm that aims to reduce the general impact of systems rather than individual components through energy efficiency.
 
 ## Carbon capture
-- [Extra - Carbon Capture and Storage](Extra%20-%20Carbon%20Capture%20and%20Storage): a short, optional reading from your dependable course TA's, synthesizing how carbon capture works, the difference between industrial carbon capture and direct air capture, and various criticisms of the technology.
+- Extra - Carbon Capture and Storage: a short, optional reading from your dependable course TA's, synthesizing how carbon capture works, the difference between industrial carbon capture and direct air capture, and various criticisms of the technology.
 - [Carbon Dioxide Capture Handbook](https://www.netl.doe.gov/sites/default/files/netl-file/Carbon-Dioxide-Capture-Handbook-2015.pdf ): an in-depth review of the technologies being applied in carbon capture systems from the US National Energy Technology Laboratory. Could be quite dated as it is from 2015.
 - [The Role of CO2 Storage](https://www.iea.org/reports/the-role-of-co2-storage): a report from the International Energy Agency that discusses scenarios for CCS implementation, as well as its limitations.
 - [Confronting the Myth of Carbon-free Fossil Fuels](https://ciel.org/wp-content/uploads/2021/07/Confronting-the-Myth-of-Carbon-Free-Fossil-Fuels.pdf): a brief from the Center for International Environmental Law that lays out the case against carbon capture for climate change mitigation in great detail.
