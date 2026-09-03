@@ -12,7 +12,7 @@ This is the official repository for the TU Delft graduate elective course focuse
 - [Learning Objectives](#learning-objectives)
 - [Course Structure, Dates and Delivery Locations](#course-structure-dates-and-delivery-locations)
 - [Assessment](#assessment)
-- [Grade Calculation, Repair Assigmnent and Resits](#grade-calculation-repair-assigmnent-and-resits)
+- [Grade Calculation, Repair Assignment and Resits](#grade-calculation-repair-assignment-and-resits)
 - [Dates and Deadlines](#dates-and-deadlines)
 - [This Course is Looking for Your Feedback](#this-course-is-looking-for-your-feedback)
 - [The Course Team](#the-course-team)
@@ -55,6 +55,10 @@ All lectures will be given physically at TU Delft, except for guest lectures whi
 
 * _10 September 2026 15:45-17:45_
   * Lecture 2: __[Defining Sustainability]()__
+    * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
+
+* _11 September 2026 15:45-17:45_
+  *  __Group Consultation Session__
     * [TU Delft EEMCS Hall F (36.HB.00.260)](https://esviewer.tudelft.nl/space/55/) lecture room
 
 * _17 September 2026 15:45-17:45_
