@@ -1,236 +1,809 @@
-`Version: 1.0`
-`Contributors: Cristian Cutitei, Liwia Padowska, Alex Despan
-`Publication date: 25.09.2025`
+`Version: 2.0`
+`Contributors: Liwia Padowska
+`Publication date: 18.09.2026`
 
-# Foundations of sustainable AI
-When we talk about the sustainability of artificial intelligence, two competing philosophies often emerge: [Red AI and Green AI](https://doi.org/10.1145/3381831). These terms capture not just technical differences but also value systems that shape the direction of research.
-- **Red AI** is the pursuit of ever-higher performance at nearly any cost. It thrives on scaling up: bigger datasets, larger models, longer training runs. This philosophy has brought impressive breakthroughs, but it often ignores the environmental and economic toll. Training a single large model can consume as much electricity as dozens of households use in a year, generating significant carbon emissions and raising barriers for institutions without access to vast computing resources.
-- **Green AI**, in contrast, places efficiency at its core. It seeks competitive performance while minimizing energy consumption, redundant computation, and waste. Rather than chasing accuracy at any cost, Green AI asks: _How can we achieve progress responsibly?_
 
-![greenai](Figures/greenai.jpg) 
+# 1) Central Processing Unit Scaling and Performance Limits
 
-The distinction is not absolute. Both approaches have their place, but the values they embody lead to [very different outcomes](https://doi.org/10.1145/3381831). Red AI expands technical frontiers, often with diminishing returns: the last fraction of a percent in accuracy might require exponentially more compute. Green AI, however, reminds us that innovation should also consider accessibility, equity, and sustainability.
+## 1.1) Instruction Level Parallelism Saturation Wall
 
-## Metrics and measurements
-Traditionally, AI research has celebrated accuracy as the key metric of success. But accuracy alone hides the true price of progress. To properly evaluate sustainability, we must consider different aspects:
+### What is Instruction Level Parallelism?
 
-1. **Carbon emissions** during training, which vary by region and energy source. 
-2. **Energy consumption**, logged by GPUs or power meters.
-3. **Floating-point operations (FLOPs):** FLOPs measure the total number of arithmetic operations required to train or run a model. They provide a hardware-independent estimate of computational effort. A model that requires trillions of FLOPs is far more resource-intensive than one requiring billions. However, FLOPs do not account for memory transfers, data loading, or communication between devices, which can also be major bottlenecks.
-4. **Model parameters:** The number of trainable parameters indicates the size and complexity of a model. Larger parameter counts usually mean greater memory requirements, higher storage costs, and longer training times. For example, a model with billions of parameters may need specialized hardware and parallelization strategies, while a smaller model can run on standard GPUs or even edge devices. That said, parameter count alone does not perfectly predict efficiency, since some architectures are designed to be lightweight despite high parameter counts.
-5. **Runtime:** This refers to the wall-clock time needed to train or perform inference with a model. Runtime captures the interaction between model design, dataset size, hardware efficiency, and parallelism. Two models with identical FLOPs may have very different runtimes if one makes better use of GPU parallelization or optimized kernels. Runtime also includes practical overhead such as data preprocessing and checkpointing, which can significantly increase total costs in real-world workflows.
+**Instruction Level Parallelism (ILP)** refers to executing multiple instructions at the same time within a single Central Processing Unit (CPU) core (Fisher & Rau, 1991, Instruction-Level Parallel Processing). The CPU scans its upcoming instruction stream, looks for instructions that do not depend on each other, and overlaps their execution instead of running them strictly one after another (Fisher & Rau, 1991, Instruction-Level Parallel Processing). For example, if one instruction adds two numbers and another loads data from memory, and neither needs the other's result, the CPU can carry out both at once instead of waiting. This scanning and overlapping happens entirely inside the hardware and is invisible to the programmer.
 
-No single measure captures the full picture. But together, they allow researchers to compare not only **what** a model achieves, but **how** it achieves it. This all sounds well and good in theory, but, in practice, many machine learning papers still fail to report the energy and carbon costs of training. Several changes [have been proposed](https://www.jmlr.org/papers/v21/20-312.html) to close this gap: 
+ILP is limited mainly by two things: **dependencies** and **uncertainty** (Fisher & Rau, 1991, Instruction-Level Parallel Processing; Wall, 1991, Limits of Instruction-Level Parallelism).
 
-- Lightweight loggers that track real-time energy use.
-- Publishing environmental metrics alongside accuracy in benchmarks.
-- Experiment-level reporting to ensure reproducibility. When ethically appropriate, researchers should release code and models to reduce emissions from unnecessary replication (independently re-running experiments to verify reported results).  When code or models are not shared, researchers must recreate them from scratch, which often consumes substantial computing resources and energy. This is particularly important for large models, where limited access to resources makes replication energy-intensive. In production settings, sharing models and code internally within a company promotes reuse and prevents the extra energy costs of building similar systems from scratch.
-- Training models (especially in reinforcement learning) in efficient environments. For example, you can improve the efficiency of Atari experiments by keeping resources on the GPU, and thus avoiding energy and time overheads from moving memory back and forth.
+**Dependencies**: when instruction B needs the result of instruction A, B simply has to wait. There is no way around this.
 
-Researchers [argue](https://www.jmlr.org/papers/v21/20-312.html) for systemic changes in how research is evaluated. Imagine leaderboards where models are ranked not only by accuracy but also by efficiency and carbon footprint. Or badging systems that highlight environmentally responsible research. By shifting incentives, the community can reward practices that balance innovation with responsibility.
+**Uncertainty**: branches (`if`/`else` statements) and memory accesses create outcomes the CPU cannot know in advance, which makes it hard to plan ahead and safely schedule work it is not yet sure about (Wall, 1991, Limits of Instruction-Level Parallelism).
 
-# AI accelerator hardware
+### Dependency example
 
-The rapid progress of artificial intelligence has not been driven solely by better algorithms. A central enabler has been the development of [**specialized hardware accelerators**](https://ieeexplore.ieee.org/document/9988986) that make the training and deployment of large-scale models computationally feasible. While general-purpose CPUs remain indispensable for everyday computing, they lack the characteristics required to process the highly parallel workloads used in modern machine learning.
+Instruction 2 below **depends** on instruction 1 (a read after write dependency), so they cannot truly run in parallel (Wall, 1991, Limits of Instruction-Level Parallelism):
 
-## Limitations of Central Processing Units (CPUs)
+```nasm
+; r1 = r2 + r3
+ADD r1, r2, r3
 
-Central Processing Units (CPUs) are designed to handle a wide variety of tasks. This flexibility is an advantage for general computing, but it comes at a cost: inefficiency in highly parallel operations. Neural networks, in contrast, rely on repetitive matrix multiplications and vector operations, computations that are [trivially parallelizable](https://en.wikipedia.org/wiki/Parallel_computing).
+; r4 = r1 * r5   (needs r1 from the ADD)
+MUL r4, r1, r5
+```
 
-Attempts to scale CPUs by increasing frequency eventually failed due to the physical limits of [**Dennard scaling**](https://doi.org/10.1109/JSSC.1974.1050511), leading to excessive heat dissipation and energy leakage. The transition to multicore designs provided some relief, but the phenomenon of [**Dark Silicon**](https://link.springer.com/book/10.1007/978-3-031-28924-8), which represents the inability to power all transistors simultaneously due to power density limits, imposed fundamental constraints on further CPU-based scaling.
+The `MUL` cannot start until the `ADD` produces `r1`. That dependency chain limits ILP regardless of how much execution hardware the core has available (Wall, 1991, Limits of Instruction-Level Parallelism).
 
-![dennard-scaling](Figures/dennard-scaling.png)
-[CPU frequency and power trends show the end of Dennard scaling and rise of Dark Silicon.](https://doi.org/10.36427/CEJNTREP.5.1.5051)
+### Uncertainty example: branches (control dependency)
 
-## Classifying AI accelerators
-AI-specific hardware can be classified according to two criteria: its fabrication and its architecture. Two widely used fabrication-based classifications are [**ASICs** and **FPGAs**](https://doi.org/10.1109/ACCESS.2022.3229767):
+With a branch, the CPU does not know which path will execute until the condition is resolved, so it has to **predict** (Fisher & Rau, 1991, Instruction-Level Parallel Processing; Wall, 1991, Limits of Instruction-Level Parallelism):
 
-* **Application-Specific Integrated Circuits (ASICs):** chips whose logic is permanently fixed during fabrication. Every transistor and wire is laid out for a single purpose, yielding very high efficiency and performance-per-watt, but no post-fabrication flexibility. Google’s Tensor Processing Unit (TPU) is an example of an ASIC designed specifically for neural network workloads.
-* **Field-Programmable Gate Arrays (FPGAs):** integrated circuits that can be reconfigured after manufacturing. They consist of a grid of programmable logic blocks and interconnects, which can be rewired to implement different datapaths. This makes them adaptable for research and prototyping, though they are typically less energy-efficient than ASICs due to configuration overhead.
+```c
+if (x > 0) {
+  y = a + b;
+} else {
+  y = a - b;
+}
+z = y * 3;
+```
 
-These categories describe how a chip is manufactured or configured, but they do not capture how computation is organized internally. For this, we turn to the distinction between [**temporal** and **spatial** architectures](https://doi.org/10.1109/ACCESS.2022.3229767):
+In assembly like terms:
 
-* **Temporal architectures (e.g., CPUs, GPUs):** Computation relies on a small number of [Arithmetic Logic Units (ALUs)](https://doi.org/10.1109/ACCESS.2022.3229767) that repeatedly fetch data from a central memory hierarchy. The same ALUs are reused across different operations over time.
-* **Spatial architectures (e.g., TPUs, neuromorphic processors):** Computation is [distributed](https://doi.org/10.1109/ACCESS.2022.3229767) across many ALUs, each equipped with local memory and control logic. These units operate in parallel, and each region of silicon is dedicated to a specific part of the computation.
+```nasm
+CMP x, 0
+JLE else_path
+ADD y, a, b
+JMP join
+else_path:
+SUB y, a, b
+join:
+MUL z, y, 3
+```
 
-![temporal_vs_spatial](Figures/temporal_vs_spatial.png) [Visualization of temporal and spatial architectures.](https://eyeriss.mit.edu/tutorial-previous.html)
+The CPU speculatively executes one path based on a branch prediction (Fisher & Rau, 1991, Instruction-Level Parallel Processing). If the guess is wrong, it **throws away** that work in what is called a pipeline flush, which costs cycles and energy, since the CPU has to re fetch and re execute the correct path from scratch (Aragón, González, & González, 2006, Control Speculation for Energy-Efficient Next-Generation Superscalar Processors; Wall, 1991, Limits of Instruction-Level Parallelism).
 
-## Accelerator families
-With the properties used for categorization of AI hardware cleared up, it is best to clarify how these properties are applied in practice by studying the most important 'families' of AI accelerators.
+### Uncertainty example: memory
 
-![ai_hardware_taxonomy](Figures/ai_hardware_taxonomy.png)
-[AI hardware has been produced with both temporal and spatial designs.](https://eyeriss.mit.edu/tutorial-previous.html)
+Loads can be slow (a cache miss) and the CPU sometimes cannot be sure whether a later store affects an earlier load, a problem known as **aliasing** (Wall, 1991, Limits of Instruction-Level Parallelism).
 
-### 1. Graphics Processing Units (GPUs)
-Originally designed for rendering graphics, GPUs consist of thousands of relatively simple cores optimized for floating-point throughput. Their architecture is well-suited to data-parallel operations, making them the [workhorses](https://dl.acm.org/doi/abs/10.5555/319030) of deep learning.
-- Advantages: mature software ecosystem (CUDA, PyTorch, TensorFlow), versatility across workloads, high throughput
-- Limitations: high power consumption, [less efficient](https://doi.org/10.1109/ACCESS.2022.3229767) than purpose-built hardware
+**(a) Load latency and cache misses:**
 
-### 2. Application-Specific Integrated Circuits (ASICs)
-ASICs are fixed-function chips in which every transistor and wire is laid out for a specific purpose. Google’s [**Tensor Processing Unit (TPU)**](https://doi.org/10.48550/arXiv.1704.04760) exemplifies this category: it employs **systolic arrays** that rhythmically pass data across processing elements to maximize locality and reuse.
-- Advantages: maximum efficiency and performance-per-watt, minimal wasted computation
-- Limitations: extremely costly and time-consuming to design, and inflexible once fabricated
+```nasm
+LOAD r1, [p]        ; could be fast (cache hit) or very slow (miss)
+ADD  r2, r1, 1       ; depends on r1, stalls if LOAD is slow
+```
 
-### 3. Field-Programmable Gate Arrays (FPGAs)
-FPGAs occupy an intermediate space between flexibility and efficiency. They consist of [reconfigurable logic blocks](https://doi.org/10.1109/ACCESS.2022.3229767) that can be “rewired” post-manufacturing. This allows them to prototype new accelerator designs or adapt to evolving workloads.
-- Advantages: reconfigurable, lower power consumption than GPUs, suitable for edge or low-to-medium production volumes
-- Limitations: limited peak performance compared to ASICs, steeper programming complexity, smaller ecosystem
+The CPU tries to stay busy by executing other instructions that *do not* depend on `r1`, but if too much of the program depends on that one load, ILP collapses (Wall, 1991, Limits of Instruction-Level Parallelism).
 
-### 4. Neuromorphic chips
-Neuromorphic processors take inspiration from biology, specifically the brain’s event-driven communication. Instead of continuous matrix multiplications, they employ [**spiking neural networks (SNNs)**](https://doi.org/10.1109/JPROC.2021.3067593). This architecture yields **ultra-low power consumption** (energy per spike as low as 50 femtojoules) and **massive parallelism**, since neurons operate independently. However, neuromorphic hardware remains [experimental](https://dx.doi.org/10.1088/1741-2560/13/5/051001), with limited software support and incompatibility with mainstream deep learning models.
-- Advantages: exceptional energy efficiency, real-time operation, suitability for edge devices
-- Limitations: immature ecosystem, difficulty benchmarking, limited applicability to conventional deep learning
+**(b) Aliasing and ordering uncertainty (load versus store):**
 
+```nasm
+LOAD r1, [p]        ; read memory at p
+STORE [q], r2        ; write memory at q
+ADD  r3, r1, 5
+```
 
-## TinyML: Ultra-Low-Power AI at the Edge
-[**TinyML (Tiny Machine Learning)**](https://tinymlbook.com/) is the field of deploying machine learning models on very low-power devices such as **microcontrollers, edge sensors, and embedded systems**. It fills the gap between state-of-the-art AI and **real-world applications in constrained environments**. It enables intelligent, responsive systems to function in remote locations without requiring constant internet access or a cloud connection. This makes it ideal for **real-time inference in IoT, wearables, and edge computing**.
+If the CPU cannot prove that `p` and `q` are different addresses, it has to be conservative about reordering the load and store, which reduces ILP. Modern cores use memory disambiguation and speculation to relax this in practice, but a misspeculation can trigger a costly replay (Wall, 1991, Limits of Instruction-Level Parallelism).
 
-![tinyml-microcontroller](Figures/tinyml-microcontroller.png)
-[TinyML deployment on a microcontroller.](https://tinymlbook.com/)
+### Micro architectural techniques that implement ILP
 
-## Scalable Transformer Accelerator Unit (STAU)
-Many new architectures are being designed to support modern computational efforts. One such design is the [**Scalable Transformer Accelerator Unit (STAU)**](https://doi.org/10.3390/electronics13234683), developed for efficient execution of Transformer models on small devices. Unlike GPUs or TPUs that target large-scale training, STAU is optimized for **real-time, on-device AI** such as voice assistants and mobile applications.
+Modern CPUs implement ILP with a set of micro architectural techniques (Fisher & Rau, 1991, Instruction-Level Parallel Processing; Smith & Sohi, 1995, The Microarchitecture of Superscalar Processors).
 
-Key architectural innovations [include](https://doi.org/10.3390/electronics13234683):
-* **Variable Systolic Array (VSA):** dynamically adapts to varying sequence lengths, avoiding idle computation and improving efficiency for natural language processing tasks.
-* **Row-wise data input:** reduces memory stalls and improves bandwidth utilization.
-* **Quantization without layer normalization:** employs a custom 16-bit floating-point format, eliminating expensive normalization operations.
-* **Radix-2 softmax engine:** reduces hardware complexity while preserving accuracy in attention mechanisms.
-* **Embedded processor integration:** allows the same hardware to support multiple Transformer architectures through software configuration.
+- **Pipelining**: instruction execution is split into stages, for example fetch → decode → execute → write back, so that *different instructions occupy different stages at the same time* (Smith & Sohi, 1995, The Microarchitecture of Superscalar Processors). This raises *throughput* (instructions completed per cycle) even though each individual instruction still needs to pass through all four stages to finish.
 
-STAU [has been claimed to](https://doi.org/10.3390/electronics13234683) achieve up to a 5.18× speedup compared to CPUs, while maintaining accuracy above 97% and reducing computation time for longer inputs by more than 68%. This case illustrates a broader trend: accelerators are moving not only into data centers but also into edge devices, where efficiency, privacy, and low power consumption are essential.
+---
 
-Overall, AI hardware accelerators have become [indispensable](https://doi.org/10.1109/ACCESS.2022.3229767) in enabling modern machine learning. GPUs provided the first scalable platform, ASICs such as TPUs pushed performance and efficiency further, FPGAs offered adaptability, neuromorphic processors point toward radically new paradigms inspired by biology, and TinyML extends AI into ultra-low-power embedded contexts. Emerging designs like STAU demonstrate that the field continues to evolve, particularly toward efficient, real-time AI at the edge.
+**1. Fetch**: *"go get the instruction"*
 
-# Metalearning 
+The CPU reads the instruction from memory without yet knowing what it means, only retrieving the raw bytes.
 
-From the choice of data source to the selection of training algorithms, each and every choice that an AI/data engineer makes has an indirect impact on the environment. These choices are often grouped together under the heading of 'metalearning'.
+```
+Memory address 0x04: [ADD instruction bytes]  ← CPU fetches this
+```
 
-Described as "learning to learn," metalearning is a subfield of machine learning and artificial intelligence that focuses on designing models and algorithms capable of improving their own learning process over time. Instead of simply learning patterns from data to perform a specific task, metalearning systems aim to understand how learning itself can be optimized across a variety of tasks and environments. This involves leveraging experience from previous learning "episodes" to adapt more efficiently to new problems, often with fewer data or computational resources.
+---
 
-To give a more simple example, imagine you are a builder at the beginning of their career.  Just fresh out of school, you master the theoretical side of things, but, like everyone, you lack practice. At first, you will make many mistakes until you reach a certain level of "wisdom". These mistakes are "wasteful". You will waste significant amounts of time and materials. After many such mistakes you start to get an intuition about your field of work. Given blueprints in front of you, a sway of ideas flow through your mind, yet you discard most of them based on past experience, now you are more likely to get it right on the first try. This is why they say practice makes perfect.
+**2. Decode**: *"figure out what it means"*
 
-Although they do not waste concrete, stone or wood, they may waste their own time, as well as compute time, which directly translates to wasted energy and emissions. Metalearning asks the following question: **can we skip the wait for every new student to become proficient and create an automatic framework that already knows what is to be done when faced with a problem?**
+The CPU interprets the instruction: this is an `ADD`, the inputs are the registers holding `a` and `b`, and the result goes into the register for `x`.
 
-Let's take the simplest problem that any AI/data engineer faces in their introductory course: tuning hyperparameters for their algorithm. A quick search on [SciKitLearn](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)for the SVM algorithm results in 15 hyperparameters to tune. If we were to tune this [SVM](https://nl.mathworks.com/discovery/support-vector-machine.html) using classic [gridsearch](https://en.wikipedia.org/wiki/Hyperparameter_optimization) and chose 4 prospective values for each hyperparameter, we would have to train this SVM over **1,073,741,824 unique combinations**. Even with an optimistic estimate of one second per instance trained, the total training time would be approximately 34 years - another instance of exponential growth.
+```
+ADD  R1, R2, R3
+      ↑   ↑   ↑
+      x   a   b     ← CPU now knows: add R2 + R3, store in R1
+```
 
-Several research lines have been pursued to reduce this amount of computation. In TU Delft, these are covered in detail in the [DSAIT4025: Alternative Learning Strategies](https://www.studyguide.tudelft.nl/courses/study-guide/educations/14789) course, so we will only briefly discuss the most notable. 
+---
 
-1. **Hyperparameter search**. As an easy example, one of the most popular ways to reduce computational effort is to use **Random Search** instead of **Grid Search**. This small substitution has the potential to greatly improve performance, because it has no performance hit on using additional hyperparameters. Additionally, Random Search can find the level of contribution to performance for each hyperparameter, giving an overview of which are worth tuning and which are not.
+**3. Execute**: *"actually do the work"*
 
-![GridVsRandom](Figures/GridVsRandom.png)
-[Comparing Grid Search and Random Search algorithms.](https://www.studyguide.tudelft.nl/courses/study-guide/educations/14789)
+The ALU (Arithmetic Logic Unit) performs the addition.
 
-2. **Performance curve prediction**. Another reasonable approach is to try and model the performance curve of the model as a function of the hyperparameters that have already been used. The predicted performance can then be used with i.e. Bayesian optimization to try and find the next possible minimum, which can potentially indicate the desired hyperparameter value. In the figure below, the dark line represents the model's performance mean prediction (with the confidence interval in blue), while the black dots are points with hyperparameter values found during training. Fitting a nonlinear regression between those points while taking the mean performance and confidence interval into account can provide a directed idea of where to find better options.
+```
+R2 = 5   (value of a)
+R3 = 3   (value of b)
 
-![BayesainOptim](Figures/BayesainOptim.png)
-[Iterative hyperparameter tuning with performance curve prediction.](https://www.studyguide.tudelft.nl/courses/study-guide/educations/14789)
+ALU: 5 + 3 = 8
+```
 
-3. **Portfolio design**. Obtaining the original points can be done through the Random Search presented above, or even better, by leveraging previous experience. In **Portfolio design**, engineers keep a record of which hyperparameters worked well in the past. Unfortunately, in computer science, there is no such thing as a free lunch, and actually building a portfolio turns out to be [NP-Hard](https://en.wikipedia.org/wiki/NP-hardness), which means that it takes an exponential amount of time to finish computation. Alternatively, AI engineers perform approximations and try to link up dataset and problem features to hyperparameters and the algorithm's performance, as in the figure below. The most promising of these 'metafeatures' would be simple information about the dataset, such as NumberOfInstances, NumberOfClasses, Minority/MajorityClassSize etc. 'Landmarkers' were also used: the recorded performance of a very simple model (e.g. Decision Trees) on the dataset.
+---
 
-![portfolio design](portfolio%20design.png)
-[Predicting the distribution of model performance based on multidimensional feature spaces.](https://www.studyguide.tudelft.nl/courses/study-guide/educations/14789)
+**4. Write back**: *"save the result"*
 
-It is clear that this field did not pass smoothly into the modern deep learning age. Therefore, significant research efforts are underway to bring it up to date. The features above are all 'hand-crafted', which was the modus operandi of the field before AI 'learned to learn'; AI/data researchers needed to select worthwhile features to focus on. Even though this rather field comprises ambiguous, non-descriptive hand-crafted features, its potential to improve the performance of AI workloads has incentivized continued research.
+The CPU writes the result (`8`) back into the destination register `R1`, which now holds `x`. This is the stage that commits the answer so later instructions can use it.
 
-# Reducing the footprint of AI development
-Modern AI development has seldom focused on reducing its environmental impact. Let's take a look at the implications of each step AI/data engineers take during the development cycle.
+```
+R1 ← 8    (x is now 8, available for the next instruction)
+```
 
-## Data acquisition
-The very first task to be pursued is acquiring data for the model. It is difficult to properly measure the footprint of this part of the job, but it might be reasonable to [assume that data acquisition could represent a substantial part of the emissions the training process produces](https://www.iea.org/reports/energy-end-use-data-collection-methodologies-and-the-emerging-role-of-digital-technologies?utm_source=chatgpt.com).
+---
 
-- For example, LLMs literally use the entirety of the written internet as training data, as well as unknown amounts of preprocessing and [tokenization](https://en.wikipedia.org/wiki/Large_language_model#Tokenization), with all the storage and computational power involved in each.
-- Alternatively, [ImageNET](https://www.image-net.org/) is a large-scale visual database containing **over 14 million images**, each hand-annotated with object labels. The dataset is organized according to the **WordNet hierarchy**, with more than **20,000 categories**, including objects, animals, scenes, and more. Even though one could argue that the value it has brought to the research community and therefore the world is immeasurable, its environmental impact is certainly measurable. 
+### Why pipelining matters
 
+Without pipelining, the CPU would finish all four stages of one instruction before starting the next. With pipelining, each stage works on a *different* instruction at the same time once the pipeline has filled:
 
-- An example of a dataset that is extremely [difficult to obtain is high-resolution medical imaging data](https://pmc.ncbi.nlm.nih.gov/articles/PMC11566659/?utm_source=chatgpt.com) for rare brain diseases , such as intracranial aneurysms in children. Because these conditions occur infrequently, hospitals may only collect a handful of cases over many years, making it nearly impossible to train a deep learning model from scratch without [over fitting](https://en.wikipedia.org/wiki/Overfitting). 
-- Another example of a dataset that is very costly in terms of energy to create is a large-scale autonomous driving dataset like [Waymo Open](https://waymo.com/open/) or Tesla’s internal driving data. Collecting this kind of data requires fleets of instrumented cars driving millions of kilometers, constantly recording high-resolution video, LiDAR scans, GPS data, and sensor readings. Not only does the physical data collection burn fuel or electricity for the vehicles themselves, but storing and processing the petabytes of raw sensor data demands massive data centers with significant cooling and compute power.
+```
+Cycle:       1       2       3       4       5       6
+Instr. 1:  Fetch   Decode  Execute Write
+Instr. 2:          Fetch   Decode  Execute Write
+Instr. 3:                  Fetch   Decode  Execute Write
+```
 
-### Dataset transparency
-Each of the above cases features a different data collection process. In reality, the gathering and labeling processes often lack structure and transparency. A [recent survey](https://arxiv.org/abs/1912.08320) of machine learning studies found that very few documented where the labeled data came from. Most did not explain who the annotators were, whether they had been trained, or how consistent the labeling was. Hardly anyone disclosed how labelers were compensated. In many cases, the data wasn't even shared.
+Each instruction still takes four cycles end to end, but once the pipeline is full the CPU completes close to one instruction every cycle instead of one every four. It is worth being precise here: during the very first cycles the pipeline is still filling, so not every stage is occupied yet (in cycle 1 above, only the fetch stage is doing useful work). The throughput gain is a steady state effect that appears once the pipeline has enough instructions in flight to occupy every stage every cycle (Smith & Sohi, 1995, The Microarchitecture of Superscalar Processors).
 
-This matters more than it might seem. Poor documentation means results cannot be trusted or replicated. The authors [argue](https://arxiv.org/abs/1912.08320) that we should treat data annotation more seriously, much like an experimental setup in science. That means publishing labeling guidelines, reporting inter-rater agreement, compensating labelers fairly, and making data accessible whenever possible. Doing these things helps us build machine learning systems that are not just accurate, but also fair and reliable.
+- **Multiple issue (superscalar)**: the core can start more than one instruction in the same cycle, provided the instructions are independent of each other and a free execution unit of the right type is available, such as a spare ALU for integer arithmetic, a floating point unit, or a load and store unit for memory access (Smith & Sohi, 1995, The Microarchitecture of Superscalar Processors).
 
-To address the problem of datasets lacking transparency of origin, one paper proposed something very practical: [datasheets for datasets](https://arxiv.org/pdf/1803.09010). Just like components in electronics come with datasheets explaining how they work and how they should be used, datasets should also come with documentation. A datasheet would explain how the data was collected, who collected it, what it’s intended for, and what its limitations are. This kind of documentation helps prevent misuse.
+Consider the CPU executing this code:
 
-This also supports better reproducibility; when other researchers understand how the dataset was created, they can replicate results or build upon them more confidently. Just as importantly, datasheets help researchers identify opportunities for reuse. Instead of collecting yet another dataset from scratch, a well-documented existing one might do the job, saving time, money, and energy.
+```c
+x = a + b;
+y = c * d;
+z = e - f;
+```
 
-### Dataset size and quality
-In the industry, the most frequent tagline is that 'the more data, the better'. Although quantity is a quality on its own, this is only true in an environment where we do not know what we are doing. As an example, many deep learning tasks involve obtaining as much data as possible in order to allow the algorithm to determine patterns that reveal what we are actually searching for. However, in any other machine learning task, it may be that a small but very representative dataset can fulfill the same purpose as any number of unrelated samples.
+### Why these instructions can run in parallel
 
-Taking a real world use case, a [recent study](https://doi.org/10.3389/fpls.2021.811241) on datasets for agricultural pest control raises an important question about the idea that 'more is better'. This belief has driven agricultural researchers to collect massive datasets for crop pest recognition, which include thousands of labeled photographs of insects such as moths, beetles and caterpillars, species that can severely damage crops and cause significant economic losses. 
+Each line uses completely different variables, so none of them depend on each other's result and the CPU can run all three in the same cycle:
 
-At first glance, the logic makes sense; more pest images should help the model learn to recognize them under different lighting, angles and growth stages. However, every additional image comes at a cost: time spent capturing it, expert effort to identify the species, storage space for files, and finally, the energy to process it during training. For research teams working with limited budgets and computing power (especially in developing regions where pest damage is most devastating), these costs are a serious problem. The authors [argue](https://doi.org/10.3389/fpls.2021.811241) that what truly matters is data quality. In pest recognition, redundancy is a real issue: many collected images are almost the same. Training on these duplicates adds little new knowledge but still consumes computational resources. 
+```
+x = a + b;   →   uses R1, R2        ✓ independent
+y = c * d;   →   uses R3, R4        ✓ independent
+z = e - f;   →   uses R5, R6        ✓ independent
+```
 
-![Pasted image 20250924211533](Figures/Pasted%20image%2020250924211533.png)[Relationship between model accuracy and data quantity for the agricultural pest control model.](https://doi.org/10.3389/fpls.2021.811241)
+### What a superscalar core does
 
-There are many ways to tackle this problem. This study in particular introduces the [Embedding Range Judgement](https://doi.org/10.3389/fpls.2021.811241) (ERJ) method. In this simple method, each image is passed through a neural network to generate a feature vector, a numerical summary of its visual characteristics. For each pest species, the method calculates the range of feature values found in the dataset. If a new image's features fall outside this range, it likely contains novel information and it is kept. If it falls inside, it is considered redundant and excluded. 
+A three way superscalar core has multiple execution units running in parallel, for example a separate ALU for each operation:
 
-When models were trained on only the ERJ-selected “good” data, they performed as well as, and in some cases better than, models trained on the full dataset. Randomly selected subsets were less reliable, and datasets made of redundant images performed the worst. These results held true for both shallow and deep convolutional neural networks, suggesting the method is robust across architectures.
+```
+Cycle 1:
+┌─────────────────┬─────────────────┬─────────────────┐
+│   ALU Unit 1    │   ALU Unit 2    │   ALU Unit 3    │
+│   a + b → x     │   c * d → y     │   e - f → z     │
+└─────────────────┴─────────────────┴─────────────────┘
+```
 
-## Model training
+All three instructions complete in one cycle instead of three, but only because three independent instructions and three free ALUs happened to line up at the same time.
 
-It seems reasonable to assume that, by reducing the time required for training a model, we reduce its overall environmental impact. Optimizing training therefore becomes a worthwhile pursuit. For example, [**Fidelity Training**](https://www.studyguide.tudelft.nl/courses/study-guide/educations/14789) appears useful in cases where training takes rather long, but a high number of hyperparameter configurations needs to be tested. If successfully implemented, this strategy could help disregard unproductive solutions and continue with only the most promising options.
+- **Out of order execution**: the CPU is allowed to **temporarily reorder** instructions internally so that independent ones can run earlier, **without changing the program's final results** (Smith & Sohi, 1995, The Microarchitecture of Superscalar Processors).
 
-![Fidelity](Figures/Fidelity.png)
-[The accuracy of the model does not always correlate with the time it takes to train.](https://www.studyguide.tudelft.nl/courses/study-guide/educations/14789)
+Consider the CPU executing this code:
 
-Fidelity is represented in percentages: 100% fidelity means full training, while 10% means that training stops after 10% of the set training period. Evidently, lower fidelity is faster, with an inaccurate estimate of final performance, while higher fidelity takes longer but provides a more accurate estimate. Fidelity can be represented by number of epochs, training samples used, or number of features used.
+```c
+x = load(memory[100]);   // instruction 1, slow, fetches from RAM
+y = x + 1;                // instruction 2, depends on x, must wait
+z = a + b;                // instruction 3, independent, no reason to wait
+w = c * d;                // instruction 4, independent, no reason to wait
+```
 
-A simple technique that uses fidelity training is **Successive halving**:
-1. Start with N configurations with budget B (percentage of configs to remove).
-2. Remove configs (discard lowest ranking ones).
-3. Continue configs with budget B.
-4. Repeat until you are left with one.
+### Without out of order execution
 
-![Successive Halving](Successive%20Halving.png)
-[Some configs may behave worse at the beginning, but better at the end of training.](https://www.studyguide.tudelft.nl/courses/study-guide/educations/14789)
+The CPU executes strictly in program order. Instructions 3 and 4 sit idle even though they have everything they need:
 
-## Transfer learning
-Because of the enormous environmental and financial costs of building such datasets from scratch (sometimes impossible), researchers often rely on transfer learning from these large collections. 
+```
+Cycle 1:   Instr 1 starts  → fetching x from RAM...
+Cycle 2:   Instr 1 waiting → still fetching (RAM is slow, about 100 cycles)
+Cycle 3:   Instr 1 waiting → still fetching...
+...
+Cycle 100: Instr 1 done    → x is ready
+Cycle 101: Instr 2 runs    → y = x + 1
+Cycle 102: Instr 3 runs    → z = a + b
+Cycle 103: Instr 4 runs    → w = c * d
 
-[Transfer learning](https://doi.org/10.1186/s40537-016-0043-6) is a machine learning approach whereby a model trained on one task or domain is reused to improve performance on a different, but related, task or domain. Unlike traditional machine learning, which assumes that training and test data come from the same feature space and distribution, transfer learning allows knowledge to be transferred across different contexts.
+Total: about 103 cycles
+```
 
+### With out of order execution
 
-The most prevalent transfer learning technique in modern literature is the concept of [fine-tuning](https://doi.org/10.1017/S1351324921000322), which could be viewed as a mechanism to correct for mismatches between training data and the population of interest that we previously mentioned. We tend to think of the test data as the population of interest, but actually, what really matters is the data that will be seen at inference time. Evaluations assume that the test set is representative of what real users will use the system for, but that may or may not be the case. In practice, the test set is often very similar to the training set, probably more similar than either are to what real users are likely to expect from a real product.
+The CPU looks ahead, spots that instructions 3 and 4 are independent, and runs them while waiting for the slow memory fetch:
 
-Factoring the training task into pre-training and fine-tuning makes it possible to amortize large upfront investments in pre-training over many use cases. The business case for factoring is attractive because fine-tuning is relatively inexpensive compared to pre-training. Instead of improving performance by making the model larger, engineers can choose to fine-tune multiple instances of their exiting model on different tasks. This is the idea behind [mixture of experts](https://en.wikipedia.org/wiki/Mixture_of_experts) models. This essentially works because the models have seen so much data that their "insides" become good at everything, therefore shifting the domain towards what we want it to be an "expert" in requires no extensive pre-training.
+```
+Cycle 1:   Instr 1 starts  → fetching x from RAM...
+Cycle 2:   Instr 3 runs    → z = a + b   ✓ (no need to wait)
+Cycle 3:   Instr 4 runs    → w = c * d   ✓ (no need to wait)
+...
+Cycle 100: Instr 1 done    → x is ready
+Cycle 101: Instr 2 runs    → y = x + 1
 
-[This also works unexpectedly well in visual computing tasks](https://arxiv.org/abs/1409.1556). One could take a generic convolutional network trained on the vast amount of images in ImageNet, remove the last fully connected layers responsible for classification, create new ones for their particular task and train only those layers, which is relatively trivial. In as little time as a few hours, we could obtain a model that works almost as good as state of the art on particular tasks. 
+Total: about 101 cycles
+```
 
-## Post-training
+Instructions 3 and 4 executed *before* instruction 2, out of the original program order, but the final values of `x`, `y`, `z`, and `w` are identical to what strict in order execution would have produced.
 
-Recent research has found that, rather than training, model inference is actually the stage during which most emissions [are created](https://www.technologyreview.com/2025/05/20/1116327/ai-energy-usage-climate-footprint-big-tech/). That does not mean that training resources can be freely wasted, but rather that small improvements in how much energy the models consume may transform into enormous numbers in the long run. Several versatile methods can be used to reduce the post-training impact of a model, with the focus being on reducing the computational 'size' of the model.
+### What makes this possible
 
-### Model distillation
+The CPU uses a structure called a **reorder buffer (ROB)**: a queue that tracks every in flight instruction in its original program order. Instructions can execute internally in any order, but their results only become visible to the rest of the program once they reach the front of the ROB queue, which is what guarantees the final outcome is always correct (Smith & Sohi, 1995, The Microarchitecture of Superscalar Processors).
 
-[Model or knowledge distillation](https://doi.org/10.48550/arXiv.1503.02531) is a compression technique that involves a smaller 'student' model being trained to replicate the behavior of a larger, more accurate 'teacher' model. Instead of training the student directly on hard labels (e.g., class 1 is correct, others are incorrect), it learns from the softened output probabilities of the teacher. These "soft targets" provide richer information by revealing the teacher's relative confidence across all classes, not just the correct one.
+**Speculative execution**: the CPU **guesses** what will happen next, most importantly which way an `if` branch will go, and starts executing down that path early; if the guess turns out to be wrong, the speculative results are discarded and execution restarts from the correct path (Fisher & Rau, 1991, Instruction-Level Parallel Processing; Wall, 1991, Limits of Instruction-Level Parallelism).
 
-![Model_distil](Figures/Model_distil.png)
-[Model distillation only mildly reduces the accuracy of the student model.](https://www.linkedin.com/pulse/model-compression-knowledge-distillation-swapnil-kangralkar-j8dbc/)
+Consider the CPU executing this code:
 
-### Quantization
+```c
+x = load(memory[100]);   // slow memory fetch (about 100 cycles)
 
-One of the most impactful ways to decrease the computational time and energy consumption of neural networks is [**quantization**](https://doi.org/10.48550/arXiv.2106.08295). In neural network quantization, the weights and activation tensors are stored in lower bit precision than the 16 or 32-bit precision they are usually trained in. When moving from 32 to 8 bits, the memory overhead of storing tensors decreases by a factor of 4 while the computational cost for matrix multiplication reduces quadratically by a factor of 16.
+if (x > 0) {
+    y = a + b;             // branch A, taken if x is positive
+} else {
+    y = c * d;              // branch B, taken if x is zero or negative
+}
 
-There are two main classes of algorithms: Post-Training Quantization (PTQ) and Quantization-Aware Training (QAT). PTQ requires no re-training or labelled data and is thus a lightweight push-button approach to quantization. In most cases, PTQ is sufficient for achieving 8-bit quantization with close to floating-point accuracy. QAT requires fine-tuning and access to labeled training data but enables lower bit quantization with competitive results.
+z = y * 2;
+```
 
-![quantization-1](Figures/quantization-1.png) [Reducing resolution through quantization allows for the computational cost to be reduced.](https://www.maartengrootendorst.com/blog/quantization/)
+### Without speculative execution
 
-- **[Post-training quantization](https://doi.org/10.48550/arXiv.2106.08295)** (PTQ) algorithms take a pre-trained FP32 network and convert it directly into a fixed-point network without the need for the original training pipeline. These methods can be data-free or may require a small calibration set, which is often readily available. Additionally, having almost no hyperparameter tuning makes them usable via a single API call as a black-box method to quantize a pretrained neural network in a computationally efficient manner. This frees the neural network designer from having to be an expert in quantization and thus allows for a much wider application of neural network quantization. Post-training quantization techniques are very effective and fast to implement because they do not require retraining of the network with labeled data. However, they have limitations, especially when aiming for low-bit quantization of activations, such as 4-bit and below. Post-training may not be enough to mitigate the large quantization error incurred by low-bit quantization. 
+The CPU cannot touch the `if` block until `x` arrives from RAM. Everything stalls:
 
-![Pipeline for quantization](Pipeline%20for%20quantization.png)
-[The typical pipeline used for post-training quantization.](https://doi.org/10.48550/arXiv.2106.08295)
+```
+Cycle 1:    fetch x from RAM...
+Cycle 2:    waiting...
+Cycle 3:    waiting...
+...
+Cycle 100:  x = 42 arrives  → condition (x > 0) is TRUE
+Cycle 101:  run: y = a + b
+Cycle 102:  run: z = y * 2
 
-- [**Quantization Aware Training**](https://doi.org/10.48550/arXiv.2106.08295) models the quantization noise source during training. It simulates the effect of quantization during both the forward and backward passes. Although the actual computations in training remain in full precision (to preserve stability), fake-quantized versions of the weights and activations are used in the forward pass to mimic the behavior of the quantized model. This allows gradients to be computed as if the model was operating under quantization constraints. In practice, both weights and activations are quantized according to a defined quantization scheme. This allows the model to find more optimal solutions than post-training quantization. However, the higher accuracy comes with the usual costs of neural network training, i.e., longer training times, need for labeled data and hyper-parameter search.
+Total: about 102 cycles, of which about 99 are wasted stalling
+```
 
-![quantization-aware-training](Figures/quantization-aware-training.png) [Quantization aware training aims to learn the quantization procedure during training.](https://www.maartengrootendorst.com/blog/quantization/)
+### With speculative execution
 
-Both training methods involve [significant obstacles](https://www.maartengrootendorst.com/blog/quantization/). For example, training such a network requires back-propagation through the simulated quantizer block. This poses an issue because the gradient of the round-to-nearest operation in equation is either zero or undefined everywhere, which makes gradient-based training impossible. A way around this would be to approximate the gradient using the straight-through estimator, which approximates the gradient of the rounding operator as 1. However, this solution too will introduce its own toll on accuracy.
+The branch predictor has seen this code run many times before and noticed that `x > 0` is almost always true. It guesses **branch A** and starts executing immediately, without waiting for `x`:
 
-![PTQ_vs_QAT](Figures/PTQ_vs_QAT.png) [Comparing PTQ and QAT procedures.](https://blent.ai/blog/a/quantization-llm)
+```
+Cycle 1:    fetch x from RAM...  (in the background)
+Cycle 2:    GUESS: x > 0 is likely true → speculatively run y = a + b
+Cycle 3:    speculatively run z = y * 2
+...
+Cycle 100:  x = 42 arrives → condition confirmed TRUE ✓
+Cycle 101:  commit results, y and z become visible to the program
 
-Overall, building sustainable AI systems requires more than just clever algorithms, it demands thoughtful choices at every stage, from data acquisition to deployment. By reusing knowledge through transfer learning, refining models with fine-tuning, and reducing their environmental footprint via distillation and quantization, engineers can balance performance with responsibility. As future AI practitioners, recognizing these trade-offs ensures that innovation not only advances capability but also respects the finite resources of our planet.
+Total: about 101 cycles
+```
 
-# Feedback
-We are happy to receive any feedback you may have on this lecture. Is there too much information in the slides/notes, or would you like to know more about a certain topic? Please let us know by [**filling in this form**](https://forms.cloud.microsoft/e/6YADd8Lbr2).
+The CPU ran roughly 98 cycles ahead of the confirmation, with almost no stall at all.
+
+### When the guess is wrong
+
+Now imagine `x` comes back as `-5`:
+
+```
+Cycle 1:    fetch x from RAM...
+Cycle 2:    GUESS: x > 0 → speculatively run y = a + b
+Cycle 3:    speculatively run z = y * 2
+...
+Cycle 100:  x = -5 arrives → condition is FALSE ✗  wrong branch!
+Cycle 101:  discard speculative y and z (never committed)
+Cycle 102:  restart from the else branch → y = c * d
+Cycle 103:  run: z = y * 2
+
+Total: about 103 cycles, slightly worse than no speculation at all
+```
+
+This is called a **branch misprediction penalty**: the cycles and energy spent on the wrong path before it is discarded (Aragón, González, & González, 2006, Control Speculation for Energy-Efficient Next-Generation Superscalar Processors). It is why modern CPUs invest heavily in branch predictors: even though every wrong guess costs cycles and energy, the gains from the much more numerous correct guesses far outweigh the occasional penalty from wrong ones (Fisher & Rau, 1991, Instruction-Level Parallel Processing).
+
+---
+
+### Bernstein's conditions: when "parallel" is safe
+
+A classic way to formalise *when two computations can be safely overlapped* is **Bernstein's conditions** (Bernstein, 1966, Analysis of Programs for Parallel Processing).
+
+The computation, or "process," $p$ operates on two sets of data items (Bernstein, 1966, Analysis of Programs for Parallel Processing):
+
+- $I$: the set of data items it **reads** (its *inputs*),
+- $O$: the set of data items it **writes** (its *outputs*).
+
+Two processes $a$ and $b$ can run in parallel without changing the result if, over their entire execution, neither process reads a value the other writes, and neither process writes to the same variable as the other (Bernstein, 1966, Analysis of Programs for Parallel Processing):
+
+$$
+I_a \cap O_b = \varnothing \qquad \text{(b does not write something a reads)}
+$$
+
+$$
+I_b \cap O_a = \varnothing \qquad \text{(a does not write something b reads)}
+$$
+
+$$
+O_a \cap O_b = \varnothing \qquad \text{(a and b do not write to the same location)}
+$$
+
+### Dependent versus independent example
+
+Suppose the goal is to compute $a = x^2 + y^2 + z^2$. In simplified assembly:
+
+```nasm
+mul r0, r0, r0  ; step 1: r0 = r0*r0 (x²)              ⎫
+mul r1, r1, r1  ; step 2: r1 = r1*r1 (y²)              ⎬ parallel
+mul r2, r2, r2  ; step 3: r2 = r2*r2 (z²)              ⎭
+add r0, r0, r1  ; step 4: r0 = r0 + r1 (x²+y²)      sequential (needs steps 1 and 2)
+add r3, r0, r2  ; step 5: r3 = r0 + r2 (x²+y²+z²)   sequential (needs steps 3 and 4)
+```
+
+**Step 1: three independent multiplies (good ILP).**
+
+Instructions 1 to 3 do not rely on each other, since each one reads and writes a different register (`r0`, `r1`, `r2`). The CPU is *allowed* to execute all three at the same time, but only if the hardware has multiple execution units of the right type available. A modern high performance core typically has 2 to 4 integer or floating point multiplier units, so if three multiplier units are free, instructions 1 to 3 can genuinely fire in the same cycle:
+
+```
+Cycle 1:
+┌──────────────┬──────────────┬──────────────┐
+│  Multiplier1 │  Multiplier2 │  Multiplier3 │
+│  r0 = r0*r0  │  r1 = r1*r1  │  r2 = r2*r2  │
+└──────────────┴──────────────┴──────────────┘
+```
+
+If the core only had one multiplier, all three instructions would have to queue up and execute one per cycle, even though they are logically independent. Independence in the code is necessary but not sufficient: the physical execution units also need to be available.
+
+**Step 2: the additions cannot run in parallel because each one depends on a previous result.**
+
+- Instruction 4 must wait for instructions 1 and 2, since it needs both $r0 = x^2$ and $r1 = y^2$ to be ready before it can compute their sum.
+- Instruction 5 must wait for instruction 4 (it needs the updated $r0$) and also for instruction 3 (it needs $r2 = z^2$).
+
+This can be seen as a "must happen before" graph:
+
+```
+instruction 1 → instruction 4 → instruction 5
+instruction 2 → instruction 4
+instruction 3 → instruction 5
+```
+
+So even though the code starts with three instructions that can run simultaneously, instructions 4 and 5 are forced to execute one after the other. The CPU cannot overlap them no matter how many execution units it has, because instruction 5 cannot even start until instruction 4 finishes. This is the same dependency chain problem described above: the program's own structure, not the hardware, becomes the bottleneck (Wall, 1991, Limits of Instruction-Level Parallelism).
+
+### Diminishing returns of ILP
+
+**Issue width** is how many instructions a core can *start* (hand off to its execution units) per cycle. For example, a core with an issue width of four can send up to four instructions to its ALUs, multipliers, and load and store units on every clock tick. "Issuing" an instruction is the moment the CPU commits to executing it: it has been fetched, decoded, checked for dependencies, and is now being handed to the hardware unit that will run it. This is limited by the size of the **issue queue**, a buffer that holds decoded instructions waiting to be dispatched; the core can only send as many instructions per cycle as that queue is built to release at once.
+
+If programs always had enough independent work available, speedup would scale close to linearly with issue width:
+
+```
+Ideal world (enough independent instructions every cycle):
+1 issue slot   →  ~1×
+2 issue slots  →  ~2×
+4 issue slots  →  ~4×
+8 issue slots  →  ~8×
+```
+
+Real code rarely looks like that (Wall, 1991, Limits of Instruction-Level Parallelism). A more realistic per cycle view for a core with four issue slots is:
+
+```
+4 issue slots per cycle: [ _  _  _  _ ]
+```
+
+**Case A: lots of independence (rare for long stretches)**
+
+```
+cycle 1: [ A  B  C  D ]   →  4 instructions started
+cycle 2: [ E  F  G  H ]   →  4 instructions started
+```
+
+**Case B: a dependency chain (very common)**
+
+```
+cycle 1: [ A  _  _  _ ]
+cycle 2: [ B  _  _  _ ]   (B must wait for A's result)
+cycle 3: [ C  _  _  _ ]
+```
+
+**Case C: typical mixed code**
+
+```
+cycle 1: [ A  B  _  _ ]
+cycle 2: [ C  _  _  _ ]   (branch, memory, or dependency stalls)
+cycle 3: [ D  E  _  _ ]
+```
+
+So even with four issue slots built into the hardware, the program often only supplies one or two "ready" instructions at a time, which is why the measured speedup curve **flattens** well below the theoretical maximum (Wall, 1991, Limits of Instruction-Level Parallelism). A helpful mental model is **lane utilisation**: a core with four issue slots that on average only fills two of them delivers roughly two instructions per cycle on average, and widening it to eight issue slots does not help much if the program still only supplies two or three independent instructions most of the time.
+
+This is the **ILP wall**: beyond a few instructions per cycle, the program's own dependency structure, together with branch and memory uncertainty, prevents wide cores from staying busy (Wall, 1991, Limits of Instruction-Level Parallelism). Wall (1991) measured real programs and found that even under idealised conditions, meaning perfect branch prediction, infinite registers, and unlimited hardware, most programs only expose on the order of **5 to 7 instructions** worth of parallelism on average, far below what a wide superscalar machine could theoretically consume (Wall, 1991, Limits of Instruction-Level Parallelism). This is the fundamental ceiling of ILP: the limit lives in the code's own dependency structure, not in the chip.
+
+### Modern CPU example: Apple M4 Pro
+
+---
+
+The Apple M4 Pro is a high performance ARM based system on chip built on TSMC's 3 nanometre process, with 14 cores (10 performance cores plus 4 efficiency cores) and support for up to 64 GB of unified memory (Apple, 2024, Apple Introduces M4 Pro and M4 Max). Like other modern high performance cores, it relies on the ILP techniques covered above: an out of order execution engine with wide superscalar dispatch, deep pipelining that keeps execution units fed across branch mispredictions, register renaming, dynamic scheduling, and speculative execution, all working together so that independent instructions can execute out of program order while results are still committed correctly (Smith & Sohi, 1995, The Microarchitecture of Superscalar Processors).
+
+Apple does not officially publish the exact issue width or branch predictor accuracy of the M4 Pro's core. Independent microarchitectural analyses place modern high end cores like this one among the widest currently shipping, but those specific numbers should be treated as third party estimates rather than confirmed specifications, so they are intentionally left out of the table below.
+
+| Property | Value |
+| --- | --- |
+| Cores | 14 (10 performance + 4 efficiency) |
+| Process node | 3 nm (TSMC) |
+| Max unified memory | 64 GB |
+| Announced | October 2024 |
+
+## 1.2) Transistor Count (Power Wall)
+
+### Moore's Law kept giving more transistors, but not "free speed"
+
+For a long time, the industry got a *double win* every generation (Sutter, 2005, The Free Lunch Is Over):
+
+1. **More transistors** (denser chips)
+2. **Higher clock speeds** *without blowing the power budget*
+
+That "free lunch" ended in the middle of the 2000s: manufacturers could still add transistors, but could no longer keep raising frequency and voltage without hitting thermal limits (Sutter, 2005, The Free Lunch Is Over; COMSOL, 2014, Haven't CPU Clock Speeds Increased in the Last Few Years?). Herb Sutter popularised this turning point in a widely read 2005 article titled *"The Free Lunch Is Over"* (Sutter, 2005, The Free Lunch Is Over).
+
+---
+
+### Why frequency hit a wall
+
+### The key relationship (why GHz gets hot fast)
+
+A widely used approximation for **dynamic (switching) power** in CMOS is (Rabaey, Chandrakasan, & Nikolić, 2003, Digital Integrated Circuits: A Design Perspective):
+
+$$
+P \approx C \cdot V^2 \cdot f
+$$
+
+$C$: effective capacitance being switched
+
+$V$: supply voltage
+
+$f$: clock frequency
+
+So (Rabaey, Chandrakasan, & Nikolić, 2003, Digital Integrated Circuits: A Design Perspective):
+
+- doubling **frequency** tends to roughly double power
+- increasing **voltage** is particularly costly because of the V^2 term: a modest voltage increase produces a disproportionately large rise in power consumption
+
+**Concrete example (why simply raising GHz becomes thermally unsustainable):**
+
+Assume the chip starts at:
+
+$$
+V = 1.0, \quad f = 3\text{ GHz} \quad \Rightarrow \quad P \propto 1.0^2 \cdot 3 = 3
+$$
+
+Now push the frequency to 6 GHz, which in practice needs a slightly higher voltage, say $V = 1.2$, to keep the chip electrically stable:
+
+$$
+P \propto 1.2^2 \cdot 6 = 1.44 \cdot 6 = 8.64
+$$
+
+That is a **doubling of frequency** producing close to a **threefold increase in power**: the chip now generates nearly three times as much heat for only twice the speed.
+
+In principle more power could be supplied to the chip, but heat is the hard constraint: every watt consumed becomes a watt of heat that has to be physically removed from a piece of silicon roughly the size of a fingernail. Cooling has real limits; eventually fans, heat sinks, and even liquid cooling cannot extract heat fast enough to keep the chip below its maximum safe operating temperature. Exceeding that temperature causes transistors to malfunction, produce incorrect results, or degrade permanently. Even before that point, the cooling hardware required becomes impractically large, loud, or expensive for a consumer product, and in a data centre the electricity bill simply scales with power: running a chip at three times the power to get twice the speed is not economical at scale. This is why frequency scaling stopped being a practical path to performance: the thermal and energy cost grows faster than the performance gain (Sutter, 2005, The Free Lunch Is Over; COMSOL, 2014, Haven't CPU Clock Speeds Increased in the Last Few Years?).
+
+---
+
+### End of Dennard scaling
+
+**Dennard scaling**, the classic scaling theory, said that if transistors shrink, voltage and current can also be scaled down so that power density stays roughly constant while speed improves (Dennard, Gaensslen, Yu, Rideout, Bassous, & LeBlanc, 1974, Design of Ion-Implanted MOSFET's with Very Small Physical Dimensions).
+
+Around **2005 to 2007**, voltage scaling largely stalled and leakage current became a much bigger share of total power (COMSOL, 2014, Haven't CPU Clock Speeds Increased in the Last Few Years?). As a result, transistors kept shrinking, but chips stopped becoming proportionally more energy efficient.
+
+### What happened in practice: clock rates plateaued
+
+Clock speeds rose rapidly through the early 2000s and then flattened from roughly 2005 onward, with mainstream CPUs remaining in a similar GHz range since (COMSOL, 2014, Haven't CPU Clock Speeds Increased in the Last Few Years?; Sutter, 2005, The Free Lunch Is Over).
+
+```
+Before about 2005:
+  smaller transistors → lower voltage possible → higher frequency
+  (still fits within power and thermal limits)
+
+After about 2005:
+  smaller transistors → voltage can no longer drop much →
+  pushing frequency higher makes power explode
+```
+
+---
+
+### Dark silicon: transistors you cannot afford to switch on
+
+If transistor count keeps growing while the chip's thermal design power (TDP) budget stays roughly bounded, then **not everything on the chip can be fully active at the same time** (Esmaeilzadeh, Blem, St. Amant, Sankaralingam, & Burger, 2011, Dark Silicon and the End of Multicore Scaling). Parts of the chip have to stay unpowered, or "dark," to keep the whole design within its power and temperature budget; the powered, active regions are conventionally drawn as "lit" and the unpowered regions as "dark" (Esmaeilzadeh, Blem, St. Amant, Sankaralingam, & Burger, 2011, Dark Silicon and the End of Multicore Scaling). This is **dark silicon**.
+
+![dark_silicon.png](Figures/dark_silicon.png)
+
+A well known illustration of this plots, on the horizontal axis, the year in which each successive manufacturing technology node becomes mainstream, and on the vertical axis, the number of cores that fit on a chip (Hardavellas, 2012, The Rise and Fall of Dark Silicon). One line (dashed) shows the maximum number of cores that physically fit on the die at that technology node, and another line (solid) shows the number of cores that a peak performance design actually uses according to power constrained models; the growing gap between the two lines is the dark silicon effect (Hardavellas, 2012, The Rise and Fall of Dark Silicon). At the 20 nm node, for example, as many as 1000 cores could physically fit on a single die, yet a design with roughly an order of magnitude fewer cores is closer to the power efficient optimum, because populating the chip with far more cores would require more power and bandwidth than the design can supply, forcing supply voltage down and the whole system to run slower (Hardavellas, 2012, The Rise and Fall of Dark Silicon).
+
+*Legend: **Lit** = powered core · **Dark** = unpowered silicon.*
+
+---
+
+### Implication for CPU design
+
+Once "more GHz" stopped working, designers used the extra transistor budget differently (Sutter, 2005, The Free Lunch Is Over):
+
+- **More cores**: trading single thread GHz for parallel throughput
+- **Bigger caches**: to reduce slow trips to main memory (see the memory wall section below)
+- **Specialised accelerators**: carrying out specific tasks with a better performance per watt than a general purpose core
+
+---
+
+## 1.3) Memory Wall
+
+### Core idea: CPU performance has improved much faster than memory performance
+
+The **memory wall** is the widening gap between how quickly a CPU can execute operations and how quickly data can be delivered from main memory, or DRAM (Wulf & McKee, 1995, Hitting the Memory Wall: Implications of the Obvious).
+
+A tangible way to state it:
+
+> modern CPUs can complete a great deal of arithmetic work in the time it takes to service a single DRAM access.
+> 
+
+As a representative order of magnitude comparison (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach):
+
+- about **4 cycles** for a multiply
+- about **200 cycles** to access DRAM
+
+While the CPU waits for that one DRAM access, it could in principle have completed dozens of arithmetic operations, but it cannot, simply because it is missing the data those operations need.
+
+### A timeline illustration of what a stall feels like
+
+```
+CPU wants: load A[i] from DRAM
+
+Cycles:
+0      50     100    150    200
+|------|------|------|------|
+CPU:   waiting... waiting... waiting...  data arrives
+```
+
+During that wait, the core's execution units sit under used and overall performance becomes **memory bound**, meaning it is limited by memory rather than by compute (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach).
+
+---
+
+### Latency versus bandwidth: two different problems
+
+- **Latency**: how long it takes until the first byte of requested data arrives; high latency causes stalls, because the next step cannot begin until the data shows up.
+- **Bandwidth**: how many bytes per second can be streamed once a transfer is already underway; bandwidth describes a theoretical upper limit, while throughput is the rate actually achieved in practice.
+
+(Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach)
+
+Different workloads are bottlenecked by one or the other of these two problems. **Graph algorithms** are typically latency bound: visiting the next node means first resolving a pointer from the current node, so each access has to wait for the previous one to finish, and the chain of dependent, unpredictable accesses is what dominates runtime. **Machine learning training**, by contrast, is typically bandwidth bound: it streams large, mostly independent batches of weights and activations, so the sustained rate of data delivery, not the delay of any single access, sets the pace (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach).
+
+---
+
+### Why caches exist, and why they use so many transistors
+
+A **cache** is a small, fast memory placed close to the core that stores recently or frequently used data (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach). Caches work because most programs show **locality**:
+
+- *temporal locality*: the same data tends to be reused again soon
+- *spatial locality*: nearby addresses tend to be used again soon after
+
+Architecturally, CPUs build this into a **cache hierarchy**:
+
+```
+Registers       (tiny, fastest)
+   ↓
+L1 cache        (small, very fast)
+   ↓
+L2 / L3 cache   (bigger, slower)
+   ↓
+  DRAM          (huge, slowest)
+```
+
+Performance is often summarised using the **average memory access time (AMAT)** (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach):
+
+$$
+AMAT = T_{\text{hit}} + (M_{\text{rate}} \times M_{\text{penalty}})
+$$
+
+where:
+
+- $T_{\text{hit}}$ **(hit time)**: the time to access data that is already found in the cache, usually very fast, on the order of a few CPU cycles.
+- $M_{\text{rate}}$ **(miss rate)**: the fraction of memory accesses that are not found in the cache; for example $M_{\text{rate}} = 0.05$ means 1 out of every 20 accesses misses.
+- $M_{\text{penalty}}$ **(miss penalty)**: the extra time required to fetch the data after a miss, typically involving lower levels of memory such as L2, L3, or DRAM, which can take tens to hundreds of cycles.
+
+This formula captures why misses that fall all the way through to DRAM are so costly: because the miss penalty term is multiplied in, even a small miss rate can significantly increase AMAT (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach).
+
+---
+
+### Mitigations help, but do not remove the wall
+
+Architects try to hide memory latency with several complementary techniques.
+
+**Prefetching** brings data into the cache before it is actually requested, so that by the time the CPU needs it, the data is already waiting in fast cache rather than sitting in slow RAM. A hardware prefetcher watches the pattern of memory accesses and tries to predict what will be needed next; if it observes accesses to `A[0]`, `A[1]`, `A[2]` in sequence, it will speculatively load `A[3]`, `A[4]`, and so on ahead of time in the background. This works well for predictable, sequential access patterns, but fails for irregular or pointer chasing patterns where the next address cannot be guessed until the previous load completes:
+
+```c
+// ✓ prefetcher works well: sequential, predictable
+for (i ...) sum += A[i];   // prefetcher sees the pattern and runs ahead
+
+// ✗ prefetcher cannot help: each address depends on the previous load
+node = head;
+while (node) {
+    sum += node->value;
+    node = node->next;    // next address is unknown until this load finishes
+}                          // every step is a potential cache miss, with no way to prefetch
+```
+
+Traversing a linked list is one of the most difficult access patterns for a cache to help with, because each pointer dereference has to wait for the previous one to complete before the CPU even knows where to look next (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach).
+
+**Out of order execution** lets the core do other independent work while a memory load is pending; this is the same mechanism described in section 1.1 above. When the CPU issues a slow memory fetch, it does not stall immediately; instead it looks ahead in the instruction stream and executes any independent instructions that do not need the result of that fetch. The memory wall is precisely what makes out of order execution valuable in practice: without long memory latencies there would be little idle time to fill.
+
+```c
+x = load(memory[100]);   // slow, triggers a cache miss, about 100 cycle wait
+y = x + 1;                 // blocked, needs x, cannot proceed
+z = a + b;                 // ✓ independent, out of order engine runs this now
+w = c * d;                 // ✓ independent, and this
+// ...if there are no more independent instructions, the core stalls anyway
+```
+
+But if the program keeps missing cache because of poor locality, the core still spends a lot of time stalled; out of order execution can only cover the gap when there is enough independent work available, and in memory bound programs there often is not enough (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach).
+
+---
+
+### Why this matters, especially for modern workloads
+
+The memory wall is one reason performance gains increasingly come from (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach):
+
+- **improving locality** (algorithm and data layout)
+- **increasing parallelism** (many threads)
+- **using architectures that tolerate latency**
+- **moving compute closer to data**
+
+**Improving locality** means arranging data so the CPU finds what it needs already sitting in fast cache rather than fetching it from slow RAM. Think of it like a chef: instead of walking to the storage room for every single ingredient, a good chef brings everything needed for a dish to the countertop first. The CPU does something similar: it loads a whole chunk of nearby memory, a **cache line**, at once, so if data is laid out sequentially, neighbouring values come along for free. Jumping around randomly turns every access into a separate trip to the storage room.
+
+A classic example is matrix traversal. In C, rows are stored contiguously in memory, so:
+
+```c
+// ✓ GOOD: row by row, neighbours are loaded for free in the same cache line
+for (i ...) for (j ...) sum += A[i][j];
+
+// ✗ BAD: column by column, each step jumps to a different part of memory
+for (j ...) for (i ...) sum += A[i][j];
+```
+
+Same computation, same hardware, but the column major version can be **5 to 10 times slower** purely because of cache misses (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach).
+
+**Increasing parallelism** and **using architectures that tolerate latency** both attack the same problem from a different angle. Graphics Processing Units (GPUs), for example, hide memory wait times by switching almost instantly to another thread: when one thread stalls waiting for data from RAM, the GPU simply moves on to run a different thread that is already ready to go, keeping the hardware busy at all times. Because a GPU typically has thousands of threads in flight simultaneously, there is almost always another thread ready to execute, so the wait is effectively hidden behind useful work (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach).
+
+Finally, **moving compute closer to data**, through near memory or processing in memory designs, attacks the problem at its root by shortening the physical and electrical distance data has to travel in the first place (Hennessy & Patterson, 2019, Computer Architecture: A Quantitative Approach).
+
+## 1.4) Energy Efficiency Wall (Physical Limits of FLOP/J in CMOS)
+
+Even with continued improvements in chip design, there are **physical and architectural limits** to how energy efficient *CMOS microprocessors* can become (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors). The goal of this section is to estimate an **upper bound** on energy efficiency, measured in floating point operations per joule (**FLOP/J**), for CMOS processors under the **current hardware paradigm** (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+### Why this matters, after the end of Dennard scaling
+
+Historical efficiency gains in computing have been enormous, but Ho, Erdil, and Besiroglu (2023) argue that those gains are likely to slow further as the industry approaches fundamental physical limits, which makes it useful to model what the ceiling could actually be. Rather than extrapolating near term industry roadmaps, the paper takes a transparent, first principles and engineering based approach, and it explicitly reports uncertainty ranges around its estimates (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+### Core idea: total energy per FLOP is dominated by a small number of components
+
+The paper's central claim is that, in an optimised CMOS processor, the energy per FLOP can be approximated as the sum of a small number of dominant components: the energy to switch transistors, the energy to charge and discharge wire capacitances, and static leakage power (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors):
+
+$$
+E_{\text{total}} \approx E_{\text{transistor}} + E_{\text{interconnect}} + E_{\text{leakage}}
+$$
+
+where $E_{\text{transistor}}$ is the dynamic energy to switch transistors and $E_{\text{interconnect}}$ is the dynamic energy to charge and discharge wire capacitances. Static leakage power is analysed in the paper as well, but the authors argue it is unlikely to be the dominant limiter in their optimistic upper bound scenario, so the two dynamic terms are the main focus (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+---
+
+### A) Transistor switching limit (logic energy)
+
+The transistor switching component is modelled as:
+
+$$
+E_{\text{transistor}} = Q_S \cdot N_T
+$$
+
+- $Q_S$: energy dissipated per transistor switch
+- $N_T$: number of transistor switches needed per FLOP
+
+(Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors)
+
+**Landauer's principle and reliability overhead: why "near zero" is not possible**
+
+A theoretical floor for $Q_S$ comes from **Landauer's principle**: any irreversible bit operation must dissipate at least
+
+$$
+E_{\min} = k_B \, T \, \ln 2
+$$
+
+of energy per bit erased, where $k_B$ is Boltzmann's constant and $T$ is the operating temperature (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors). At room temperature ($T = 300\text{ K}$), this floor works out to approximately
+
+$$
+E_{\min} \approx 2.9 \times 10^{-21}\text{ J per bit}
+$$
+
+In practice, however, computing needs reliability margins to avoid errors from thermal noise, which pushes real minimum switching energies **1 to 2 orders of magnitude** above the pure Landauer value (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+**Overhead per FLOP matters (control logic versus pure arithmetic)**
+
+Even if an arithmetic unit itself can be built from relatively few transistors, real processors need substantial additional circuitry for control, scheduling, routing, and robustness, which increases the effective $N_T$ per FLOP well above the bare arithmetic minimum. The paper uses real hardware, including NVIDIA's H100 GPU, as a sanity check to argue that the FLOPs a chip actually delivers to a user sit on top of substantial transistor overhead beyond the arithmetic core itself (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+---
+
+### B) Interconnect limit (wire energy, the cost of moving bits)
+
+A major contribution of the paper is to stress that **interconnect energy** can come to dominate total energy as logic itself gets cheaper to switch (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors). Interconnect energy is driven by charging and discharging wire capacitance, following the standard relation:
+
+$$
+E = \tfrac{1}{2} C V^2
+$$
+
+The paper rewrites the interconnect cost per FLOP in terms of:
+
+- $C_L$: capacitance per unit length of wire
+- $L$: average wire length switched
+- $N$: number of wires charged per FLOP
+- $V$: supply voltage
+
+giving a relation of the form:
+
+$$
+E_{\text{interconnect}} \propto C_L \cdot L \cdot N \cdot V^2
+$$
+
+The key takeaway is: **even if transistor switching approaches its fundamental limits, signals still have to physically travel across wires**, and that cost is hard to scale down. The paper argues that capacitance per unit length has not improved much historically, and reducing it further tends to trade off against signal delay, materials constraints, or practical layout considerations (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+---
+
+### C) The paper's headline ceiling estimate
+
+To make the estimate as optimistic and forward looking as possible, the paper focuses on low precision compute (4 bit floating point, FP4) and builds a Monte Carlo model over plausible ranges for its parameters (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors). The resulting distribution has a reported **geometric mean** maximum efficiency of:
+
+$$
+\approx 4.7 \times 10^{15}\ \text{FP4 operations per joule}
+$$
+
+with substantial uncertainty of roughly 0.7 orders of magnitude in log space (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+Relative to the most efficient dense GPU accelerators available at the time the paper was published in 2023 (for example NVIDIA's H100), the authors estimate substantial remaining headroom before this physical ceiling binds, on the order of **two to three orders of magnitude** at comparable precision, with a more specific figure of roughly **200 times** reported for a comparison at 16 bit precision (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors). Because hardware efficiency continues to improve year over year, any such headroom figure should be read as relative to the 2023 state of the art at the time of publication, not as a fixed constant.
+
+---
+
+### D) Scope and assumptions (what this ceiling does not cover)
+
+This limit applies to CMOS operating within its **current paradigm**, and the paper explicitly assumes **irreversible** switching throughout (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors). The estimate is **not** intended to bound fundamentally different future paradigms, such as fully **reversible or adiabatic CMOS**, optical or spin based computing, or in memory computing architectures (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+---
+
+### How this connects back to the CPU and GPU story
+
+- This explains why simply adding more transistors does not keep improving efficiency indefinitely: eventually **physics and wires** dominate (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+- It also reinforces the memory wall lesson from section 1.3: **data movement dominates energy** just as it dominates latency, which is consistent with interconnect energy being a core limiter at scale (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+- Finally, it motivates specialised accelerators such as TPUs and NPUs: specialisation can reduce control and routing overhead and improve FLOP/J *within CMOS*, but any such design still operates under the same broad physical constraints described in this section (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
+
+
+## References
+
+Apple. (2024, October 29). Apple introduces M4 Pro and M4 Max. Apple Newsroom.
+
+Aragón, J. L., González, J., & González, A. (2006). Control speculation for energy-efficient next-generation superscalar processors. *IEEE Transactions on Computers*, 55(3), 281–291.
+
+Bernstein, A. J. (1966). Analysis of programs for parallel processing. *IEEE Transactions on Electronic Computers*, EC-15(5), 757–763.
+
+COMSOL. (2014). Haven't CPU clock speeds increased in the last few years? COMSOL Blog.
+
+Dennard, R. H., Gaensslen, F. H., Yu, H.-N., Rideout, V. L., Bassous, E., & LeBlanc, A. R. (1974). Design of ion-implanted MOSFET's with very small physical dimensions. *IEEE Journal of Solid-State Circuits*, 9(5), 256–268.
+
+Esmaeilzadeh, H., Blem, E., St. Amant, R., Sankaralingam, K., & Burger, D. (2011). Dark silicon and the end of multicore scaling. In *Proceedings of the 38th Annual International Symposium on Computer Architecture (ISCA '11)* (pp. 365–376). Free PDF: research.cs.wisc.edu.
+
+Fisher, J. A., & Rau, B. R. (1991). Instruction-level parallel processing. *Science*, 253(5025), 1233–1241.
+
+Hardavellas, N. (2012). The rise and fall of dark silicon. *USENIX ;login:*, 37(2), 7–17. Free PDF: usenix.org.
+
+Hennessy, J. L., & Patterson, D. A. (2019). *Computer architecture: A quantitative approach* (6th ed.). Morgan Kaufmann.
+
+Ho, A., Erdil, E., & Besiroglu, T. (2023). Limits to the energy efficiency of CMOS microprocessors. arXiv:2312.08595.
+
+Rabaey, J. M., Chandrakasan, A., & Nikolić, B. (2003). *Digital integrated circuits: A design perspective* (2nd ed.). Prentice Hall.
+
+Smith, J. E., & Sohi, G. S. (1995). The microarchitecture of superscalar processors. *Proceedings of the IEEE*, 83(12), 1609–1624. Free PDF: ftp.cs.wisc.edu.
+
+Stanford Institute for Human-Centered AI. (2024). The 2024 AI Index report. Full report PDF: aiindex.stanford.edu.
+
+Strubell, E., Ganesh, A., & McCallum, A. (2019). Energy and policy considerations for deep learning in NLP. In *Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics* (pp. 3645–3650).
+
+Sutter, H. (2005). The free lunch is over: A fundamental turn toward concurrency in software. *Dr. Dobb's Journal*, 30(3), 202–210.
+
+Wall, D. W. (1991). Limits of instruction-level parallelism. *ACM SIGPLAN Notices*, 26(4), 176–188. Free technical report version: DEC WRL Research Report 93.6.
+
+Wulf, W. A., & McKee, S. A. (1995). Hitting the memory wall: Implications of the obvious. *ACM SIGARCH Computer Architecture News*, 23(1), 20–24.
