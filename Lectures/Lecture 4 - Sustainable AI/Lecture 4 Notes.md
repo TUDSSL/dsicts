@@ -772,38 +772,930 @@ This limit applies to CMOS operating within its **current paradigm**, and the pa
 - Finally, it motivates specialised accelerators such as TPUs and NPUs: specialisation can reduce control and routing overhead and improve FLOP/J *within CMOS*, but any such design still operates under the same broad physical constraints described in this section (Ho, Erdil, & Besiroglu, 2023, Limits to the Energy Efficiency of CMOS Microprocessors).
 
 
-## References
+# Running example: one artificial neuron
 
-Apple. (2024, October 29). Apple introduces M4 Pro and M4 Max. Apple Newsroom.
+From here on we follow one and the same computation through a CPU, a GPU, a TPU and an NPU, so that we can compare the four chips on equal terms.
 
-Aragón, J. L., González, J., & González, A. (2006). Control speculation for energy-efficient next-generation superscalar processors. *IEEE Transactions on Computers*, 55(3), 281–291.
+$$
+y = \mathrm{ReLU}(w_1x_1 + w_2x_2 + w_3x_3 + w_4x_4 + b)
+$$
 
-Bernstein, A. J. (1966). Analysis of programs for parallel processing. *IEEE Transactions on Electronic Computers*, EC-15(5), 757–763.
+**Why this operation?** Every layer of every neural network is millions of copies of exactly this pattern: multiply, accumulate, add a bias, apply a nonlinearity ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
 
-COMSOL. (2014). Haven't CPU clock speeds increased in the last few years? COMSOL Blog.
+**What is ReLU?** ReLU(z) = max(0, z). It lets positive signals pass unchanged and turns negative ones into zero ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
 
-Dennard, R. H., Gaensslen, F. H., Yu, H.-N., Rideout, V. L., Bassous, E., & LeBlanc, A. R. (1974). Design of ion-implanted MOSFET's with very small physical dimensions. *IEEE Journal of Solid-State Circuits*, 9(5), 256–268.
+For one neuron with 4 inputs we need:
 
-Esmaeilzadeh, H., Blem, E., St. Amant, R., Sankaralingam, K., & Burger, D. (2011). Dark silicon and the end of multicore scaling. In *Proceedings of the 38th Annual International Symposium on Computer Architecture (ISCA '11)* (pp. 365–376). Free PDF: research.cs.wisc.edu.
+* 4 multiply accumulates (MACs), one per input pair wᵢ·xᵢ
+* 1 bias add (+b)
+* 1 activation check (ReLU, a compare against 0)
 
-Fisher, J. A., & Rau, B. R. (1991). Instruction-level parallel processing. *Science*, 253(5025), 1233–1241.
+Broken into the six operation types that every chip has to perform:
 
-Hardavellas, N. (2012). The rise and fall of dark silicon. *USENIX ;login:*, 37(2), 7–17. Free PDF: usenix.org.
+* **Load** xᵢ and wᵢ (×4 pairs)
+* **Multiply** xᵢ·wᵢ (×4)
+* **Accumulate** the products (×4)
+* **Add bias** b
+* **Compare vs 0** (ReLU)
+* **Store** y
 
-Hennessy, J. L., & Patterson, D. A. (2019). *Computer architecture: A quantitative approach* (6th ed.). Morgan Kaufmann.
+***
 
-Ho, A., Erdil, E., & Besiroglu, T. (2023). Limits to the energy efficiency of CMOS microprocessors. arXiv:2312.08595.
+# 2) How does a Central Processing Unit Work?
 
-Rabaey, J. M., Chandrakasan, A., & Nikolić, B. (2003). *Digital integrated circuits: A design perspective* (2nd ed.). Prentice Hall.
+## 2.0 What does a CPU look like?
 
-Smith, J. E., & Sohi, G. S. (1995). The microarchitecture of superscalar processors. *Proceedings of the IEEE*, 83(12), 1609–1624. Free PDF: ftp.cs.wisc.edu.
+A CPU chip contains a few large cores (for example Core 0 to Core 3). Each core has its own arithmetic units (ALU) but also a lot of control logic: a branch predictor, an out of order (OoO) scheduler and speculation hardware. The cores share a large L2/L3 cache, and the chip has a memory controller and I/O ([Superuser, What is meant by the terms CPU, Core, Die and Package?](https://superuser.com/questions/324284/what-is-meant-by-the-terms-cpu-core-die-and-package)).
 
-Stanford Institute for Human-Centered AI. (2024). The 2024 AI Index report. Full report PDF: aiindex.stanford.edu.
+Key things to remember:
 
-Strubell, E., Ganesh, A., & McCallum, A. (2019). Energy and policy considerations for deep learning in NLP. In *Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics* (pp. 3645–3650).
+* Each core spends real silicon area on control logic that most people never think about (branch prediction, out of order scheduling, speculation), not only on the arithmetic units ([Sutter, 2005, The Free Lunch Is Over](http://www.gotw.ca/publications/concurrency-ddj.htm)).
+* Memory takes a large share of the chip. In a 40 nm, 8 core server processor, more than 50% of the processor energy goes to caches and register files ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+* This is exactly why every instruction pays a high, fixed fetch, decode and control "energy tax" of about **70 pJ** before any useful work happens ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
 
-Sutter, H. (2005). The free lunch is over: A fundamental turn toward concurrency in software. *Dr. Dobb's Journal*, 30(3), 202–210.
+## 2.1 Warm up example in assembly
 
-Wall, D. W. (1991). Limits of instruction-level parallelism. *ACM SIGPLAN Notices*, 26(4), 176–188. Free technical report version: DEC WRL Research Report 93.6.
+Consider the following code snippet in Assembly (Cheng, n.d., Chapter 1 Lecture Notes):
 
-Wulf, W. A., & McKee, S. A. (1995). Hitting the memory wall: Implications of the obvious. *ACM SIGARCH Computer Architecture News*, 23(1), 20–24.
+```nasm
+SECTION .data    ; This section is used to store data
+
+	extern printf  ; Tells the assembler that the function printf exists elsewhere (in the C standard library)
+
+	global main    ; Program entry point, makes the label main available to the linker
+
+SECTION .text    ; This section contains executable code
+
+main:            ; Start of the main function
+
+		mov eax, 14  ; Move the value 14 to the EAX register
+
+		mov ebx, 10  ; Move the value 10 to the EBX register
+
+		add eax, ebx ; Add the value in EBX to EAX, result: EAX = 14 + 10 = 24
+
+		push eax     ; Push the value in EAX (24) onto the stack
+
+		call printf  ; Call a function that will use the value pushed onto the stack
+```
+
+**Note on the energy numbers:** all energy values below come from Horowitz's table for a **45 nm process at 0.9 V**. They are not measurements of one specific Intel CPU, and the absolute values are old (2014). What still holds today is the **ratio** between overhead, memory and arithmetic ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+CPUs execute instructions in a pipeline with stages (Cheng, n.d., Chapter 1 Lecture Notes):
+
+* **Fetch:** the CPU reads the next instruction from memory
+* **Decode:** the CPU figures out what the instruction means and what it needs
+* **Execute:** the CPU actually performs the operation (e.g. adds two numbers)
+* **Memory Access:** if the instruction needs to read or write data in RAM, it does so here; if not, this stage is skipped
+* **Write Back:** the result is saved back into a register so the next instruction can use it
+
+At each stage, different hardware units consume energy. Very often the **overhead** of processing an instruction (fetching it from the cache, decoding it and tracking it through the pipeline) is far larger than the cost of the actual arithmetic. A 32 bit integer add costs about **0.1 pJ**, while the whole instruction costs about **70 pJ**. Horowitz splits these 70 pJ roughly into about 25 pJ for the instruction cache access, about 6 pJ for register file accesses, and the rest mostly for control ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+Hardavellas makes the same point even more strongly for big out of order cores: a simple arithmetic operation needs only about 0.5 to 20 pJ, but a modern core spends about 2000 pJ to schedule it. Fetching, decoding, tracking instructions in flight, renaming registers, reordering and predicting branches all add to this overhead, which is the price we pay for general purpose computing ([Hardavellas, 2012, The Rise and Fall of Dark Silicon](https://www.usenix.org/publications/login/april-2012/rise-and-fall-dark-silicon)).
+
+Now, let's go line by line (Cheng, n.d., Chapter 1 Lecture Notes):
+
+## 2.2 Mov
+
+```nasm
+mov eax, 14  ; Move the value 14 to the EAX register
+```
+
+This instruction loads a constant into a register in the following way (Cheng, n.d., Chapter 1 Lecture Notes; [Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)):
+
+* **Fetch:** The CPU reads the operation code `mov eax` and the immediate `14`. An "immediate" is a constant embedded in the instruction itself, so it is not stored separately in memory. This uses the **L1 instruction cache** and the **branch prediction unit**, which predicts the address of the next instruction (Cheng, n.d., Chapter 1 Lecture Notes). A cache access costs about **10 pJ** for a small 8 KB cache and about **20 pJ** for a 32 KB cache ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). We assume the instruction is already in the cache; a miss would force an L2 access (about 100 pJ) or a DRAM access (1 to 2 nJ, i.e. 1000 to 2000 pJ) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+* **Decode:** The x86 **instruction decoder** translates the machine code into an internal micro operation (μop). This activates the decoder circuits and control logic (Cheng, n.d., Chapter 1 Lecture Notes). This is part of the ~70 pJ per instruction overhead ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). Measurements on an Intel Haswell CPU showed that the x86 decoders use **3% to 10% of the package power**, and only in the worst case when the μop cache (which stores already decoded instructions) overflows; normally the μop cache lets the decoders stay idle ([Hirki et al., 2016, Empirical Study of the Power Consumption of the x86 64 Instruction Decoder](https://www.usenix.org/conference/cooldc16/workshop-program/presentation/hirki)).
+* **Execute:** The **register file and ALU** are used. For an immediate move no real arithmetic is needed: the value `14` is simply routed to the destination register. The **register renaming logic** allocates a physical register for EAX and the value travels over an internal bus (Cheng, n.d., Chapter 1 Lecture Notes). The ALU energy is negligible. Reading or writing one 32 bit register costs about **1 pJ** ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)). No data memory is accessed, because both operands are internal (an immediate and a register) (Cheng, n.d., Chapter 1 Lecture Notes).
+* **Memory Access:** For a `mov` into a register there is no load or store to the data cache, so this stage is idle apart from bookkeeping. (The instruction itself was already read in the Fetch stage.) (Cheng, n.d., Chapter 1 Lecture Notes)
+* **Write Back:** The value `14` is written to the **architectural register EAX**. On an out of order core this means marking a physical register as ready and updating the reorder buffer. The retirement unit later commits the result, making it visible to the program (Cheng, n.d., Chapter 1 Lecture Notes). The register write costs about 1 pJ ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+**In summary:** the `mov` instruction's energy is dominated by overhead (fetch, decode, control and register access). A simple 32 bit instruction costs roughly **70 pJ** in total, while the useful work is about **0.1 pJ** or less ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+## 2.3 Add
+
+```nasm
+add eax, ebx ; Add the value in EBX to EAX, result: EAX = 14 + 10 = 24
+```
+
+This is an ALU operation that adds two registers (EAX += EBX) (Cheng, n.d., Chapter 1 Lecture Notes; [Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)):
+
+* **Fetch:** The instruction cache delivers the `ADD` opcode and operands, just like for `MOV` (about 10 to 20 pJ) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). The branch predictor supplies the next sequential address. `ADD` does not change the control flow, so it is fetched and executed in line (Cheng, n.d., Chapter 1 Lecture Notes).
+* **Decode:** The decoder translates `add eax, ebx` into a single μop that tells the ALU to add two registers. The rename stage assigns physical registers, and EAX and EBX are read from the register file (Cheng, n.d., Chapter 1 Lecture Notes). Decode and scheduling are part of the ~70 pJ overhead ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)); reading two 32 bit registers costs about 2 pJ ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+* **Execute:** The integer ALU adds 14 and 10. The switching energy of a 32 bit add is tiny, about **0.1 pJ** ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). The ALU also sets condition flags, which costs very little extra (Cheng, n.d., Chapter 1 Lecture Notes).
+* **Memory Access:** Adding registers does not touch data memory, so this stage just passes the result on (Cheng, n.d., Chapter 1 Lecture Notes).
+* **Write Back:** The sum (24) is written to EAX and the μop retires (Cheng, n.d., Chapter 1 Lecture Notes). The register write costs about 1 pJ ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+## 2.4 Push
+
+```nasm
+push eax     ; Push the value in EAX (24) onto the stack
+```
+
+`PUSH EAX` places a value on the stack by (1) decreasing the stack pointer (ESP) and (2) storing the value at the new stack address (Cheng, n.d., Chapter 1 Lecture Notes):
+
+* **Fetch:** The CPU fetches `PUSH EAX` from the L1 instruction cache (about 10 to 20 pJ) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). The branch predictor treats it as a normal sequential instruction (Cheng, n.d., Chapter 1 Lecture Notes).
+* **Decode:** The decoder turns `push eax` into μops that write EAX to memory and update ESP. On modern Intel CPUs the address calculation and the store can be "micro fused" into one μop (Cheng, n.d., Chapter 1 Lecture Notes). Decode and control belong to the ~70 pJ overhead ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+* **Execute:** The stack pointer logic subtracts 4 bytes from ESP (Cheng, n.d., Chapter 1 Lecture Notes); this is an add sized operation of about 0.1 pJ ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). EAX is read from the register file (about 1 pJ) ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+* **Memory Access:** The value is stored at the new stack address in the **L1 data cache** (about 10 to 20 pJ). If the stack line is not in L1, an L2 access (about 100 pJ) or even a DRAM access (1 to 2 nJ) is needed ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). The TLB (translation lookaside buffer) translates the virtual stack address to a physical one; on a TLB miss the CPU must read the page table from memory (Cheng, n.d., Memory Hierarchy Lecture Notes).
+* **Write Back:** The new ESP is written back to the register file (about 1 pJ) and the store is committed from the store buffer to L1. The instruction retires once both are done or queued (Cheng, n.d., Chapter 1 Lecture Notes).
+
+## 2.5 Call
+
+```nasm
+call printf  ; Call a function that will use the value pushed onto the stack
+```
+
+`CALL` is a control flow instruction. On x86 it does two things: **push the return address onto the stack** and **jump to the target address** (Cheng, n.d., Chapter 1 Lecture Notes):
+
+* **Fetch:** `CALL` is fetched from the L1 instruction cache (about 10 to 20 pJ) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). The branch predictor and the **Branch Target Buffer (BTB)** predict the target (`printf`) so the pipeline does not stall. If the prediction is correct, no pipeline flush occurs (Cheng, n.d., Chapter 1 Lecture Notes).
+* **Decode:** `CALL printf` becomes two μops: a store of the return address and a branch. The **Return Address Stack (RAS)** is updated with the expected return address (Cheng, n.d., Chapter 1 Lecture Notes). Prediction, decode and control are all part of the ~70 pJ per instruction overhead ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+* **Execute:** The CPU calculates the return address, decreases ESP and redirects the instruction pointer to `printf` (Cheng, n.d., Chapter 1 Lecture Notes). The stack pointer arithmetic is again about 0.1 pJ ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+* **Memory Access:** The return address is written to the stack through the L1 data cache (about 10 to 20 pJ) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). Because the stack was just used by `PUSH`, this is very likely a cache hit (Cheng, n.d., Memory Hierarchy Lecture Notes). At the same time, instruction fetch starts at `printf` (Cheng, n.d., Chapter 1 Lecture Notes).
+* **Write Back:** The new ESP is written to the register file and the `CALL` retires. The RAS keeps the return address so that the later `RET` can be predicted cheaply (Cheng, n.d., Chapter 1 Lecture Notes).
+
+**Why PUSH and CALL are special:** both touch memory (the stack), so their cost depends heavily on whether that memory is in the cache ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+## 2.6 Other instructions
+
+### 2.6.1 L1 Data Cache Read (Memory Load)
+
+Reads data from memory (cache or RAM) into a register (Cheng, n.d., Memory Hierarchy Lecture Notes). This did not happen in the example above, because all values were immediates (`mov eax, 14`) or registers (`add eax, ebx`) (Cheng, n.d., Chapter 1 Lecture Notes).
+
+**Example:**
+
+```nasm
+mov eax, [counter]  ; load a variable from memory into a register
+```
+
+**Energy cost** ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)):
+
+* L1 cache **read hit**: about 10 pJ (8 KB cache) to 20 pJ (32 KB cache)
+* L2 cache (about 1 MB): about 100 pJ
+* DRAM: about **1,000 to 2,000 pJ (1 to 2 nJ)**
+
+The five instructions of our warm up example cost together roughly 5 × 70 pJ ≈ 350 to 400 pJ. So **one** DRAM access costs about **3 to 5 times as much as the whole program**, and about 10,000 to 20,000 times as much as the add itself ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). That is why data locality (keeping data close to the core) is critical for energy efficiency.
+
+***
+
+### 2.6.2 Floating Point Arithmetic
+
+Real number math (numbers with decimals) runs on the floating point unit (FPU).
+
+**Example instruction:**
+
+```nasm
+fld qword [x]     ; load a float from memory
+fadd st(0), st(1) ; add two floats
+```
+
+**Energy cost (45 nm)** ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)):
+
+* **32 bit float multiply:** about 3.7 pJ
+* **32 bit float add:** about 0.9 pJ
+* (for comparison: 32 bit integer multiply about 3.1 pJ, 32 bit integer add about 0.1 pJ)
+
+So a 32 bit float add costs about **9 times** and a float multiply about **37 times** as much energy as a 32 bit integer add ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). Horowitz also points out that FP arithmetic still costs only about 1/10 of the energy of a simple instruction, which is why GPUs run the same FP operation on many data lanes at once: the lanes share one instruction and the overhead gets spread out ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+***
+
+### 2.6.3 Branch Misprediction And Pipeline Flush
+
+When the CPU guesses the outcome of a conditional branch (e.g. an `if` statement) wrongly, it has to throw away all the work it did speculatively on the wrong path.
+
+**Example instruction:**
+
+```nasm
+cmp eax, 10
+jne not_equal      ; conditional branch
+```
+
+**Cost:**
+
+* On modern x86 CPUs a misprediction costs about **15 to 20 clock cycles** ([Fog, Microarchitecture of Intel, AMD and VIA CPUs](https://www.agner.org/optimize/microarchitecture.pdf); [Chips and Cheese, Analyzing Zen 2's Cinebench R15 Lead](https://chipsandcheese.com/p/analyzing-zen-2s-cinebench-r15-lead)).
+* Rough energy estimate: if about 15 instructions have to be thrown away and each already cost part of its ~70 pJ, the waste is on the order of **1,000 pJ** (15 × 70 pJ ≈ 1,050 pJ). This is our own back of the envelope estimate built on Horowitz's 70 pJ figure, not a measured value ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+Branch predictors are right most of the time, but each miss wastes more energy than a dozen correct instructions. Branch prediction is also one of the tricks that limits how much instruction level parallelism CPUs can find: even with "impossibly good" hardware, typical programs rarely offer more than about 5 to 7 independent instructions at a time ([Wall, 1991, Limits of Instruction Level Parallelism](https://people.ee.duke.edu/~sorin/ece652/wall.pdf)).
+
+***
+
+### 2.6.4 DRAM Access (Main Memory Load/Store)
+
+Reads from or writes to main memory because the data is not in any cache (a cache miss).
+
+**Example instruction:**
+
+```nasm
+mov eax, [0x80000000] ; uncached or evicted memory access
+```
+
+**Energy cost** ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)):
+
+* **DRAM access:** about 1 to 2 nJ (we use ~2,000 pJ as the round number)
+
+A DRAM access is about **20,000 times** more energy hungry than an integer add (~0.1 pJ). Part of this comes from the energy inefficient I/O interface of DRAM (over 20 pJ per bit) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)). This makes **memory access the dominant energy consumer** in many applications. On top of the energy cost there is a time cost: processors have become faster much more quickly than DRAM, so a cache miss costs more and more clock cycles (the "memory gap" or "memory wall") ([Wulf & McKee, 1995, Hitting the Memory Wall](https://dl.acm.org/doi/10.1145/216585.216588); [Wilkes, 2001, The Memory Gap and the Future of High Performance Memories](https://www.cl.cam.ac.uk/research/dtg/attarchive/pub/docs/ORL/tr.2001.4.pdf)).
+
+**Note on two different DRAM numbers in this lecture:** in the CPU part we use **~2,000 pJ** per DRAM access (Horowitz's 1 to 2 nJ for a 64 bit access). In the GPU part we use **640 pJ** for a **32 bit** DRAM read (Dally's table, which is based on the same Horowitz data). Both come from the same source; they just count a different number of bits ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+***
+
+### 2.6.5 Division (Integer or Floating Point)
+
+Division is much more complex than addition and has a much longer latency.
+
+**Example instruction:**
+
+```nasm
+mov eax, 100
+mov ebx, 7
+div ebx          ; EAX = EAX / EBX
+```
+
+Division hardware works **iteratively** (it needs many steps to produce the result), so a single division takes many clock cycles, roughly **tens of cycles** for a 32 bit integer division on recent x86 CPUs, compared with 1 cycle for an add ([Fog, Instruction Tables](https://www.agner.org/optimize/instruction_tables.pdf)). Horowitz's table does **not** list an energy value for division, so we do not give a pJ number here. Because it keeps the divider busy for many cycles, it is clearly more expensive than a single add or multiply.
+
+***
+
+## 2.7 CPU: energy cost of each pipeline stage (summary)
+
+The same five stages, now with their typical energy cost (45 nm class CPU) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323); [Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)):
+
+* **Fetch:** read the instruction from the L1 instruction cache, about **10 pJ** (small cache) to 25 pJ (Horowitz's instruction breakdown)
+* **Decode:** translate the opcode into μops, part of the **~70 pJ overhead**
+* **Execute:** the ALU does the arithmetic, about **0.1 pJ** (tiny!)
+* **Memory Access:** data cache access, about **10 pJ** on a hit, up to **~2,000 pJ** when DRAM is needed
+* **Write Back:** save the result to the register file, about **1 to 3 pJ**
+
+**Takeaway:** the overhead of fetching, decoding and scheduling an instruction usually outweighs the actual arithmetic by far.
+
+## 2.8 CPU: operation cost comparison
+
+Approximate energy per operation (45 nm), from cheapest to most expensive ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323); [Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)):
+
+* Integer ADD (ALU): **0.1 pJ**
+* Register file access: **about 1 to 2 pJ**
+* L1 cache access: **about 10 pJ**
+* Instruction overhead of a `mov`/`add`: **about 70 pJ**
+* L2 cache access: **about 100 pJ**
+* DRAM access: **about 2,000 pJ**
+
+These values span more than **four orders of magnitude**, so on a slide they are best drawn on a logarithmic scale.
+
+**Why DRAM dominates:** one DRAM access costs several times more than all the instructions of a small addition program together, and `PUSH` and `CALL` both touch the stack in memory, so their cost depends heavily on whether that memory is cached ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+## 2.9 Our neuron on a CPU: energy cost, instruction by instruction
+
+y = ReLU(x₁w₁ + x₂w₂ + x₃w₃ + x₄w₄ + b) as simplified x86 style assembly (the syntax is simplified for teaching; real x86 would use e.g. `vfmadd231ss` and `maxss` with a zero register):
+
+```nasm
+; 8 loads: bring every input and weight into a register
+movss  xmm0, [x1]      ; load x1
+movss  xmm1, [w1]      ; load w1
+movss  xmm2, [x2]      ; load x2
+movss  xmm3, [w2]      ; load w2
+movss  xmm4, [x3]      ; load x3
+movss  xmm5, [w3]      ; load w3
+movss  xmm6, [x4]      ; load x4
+movss  xmm7, [w4]      ; load w4
+
+; 4 fused multiply adds (FMA): acc = acc + x_i * w_i
+fmadd  acc, xmm0, xmm1
+fmadd  acc, xmm2, xmm3
+fmadd  acc, xmm4, xmm5
+fmadd  acc, xmm6, xmm7
+
+add    acc, bias       ; add the bias b
+max    acc, 0          ; ReLU: keep the value if positive, else 0
+movss  [y], acc        ; store the result y
+```
+
+**How the energy is estimated** (per instruction energy = ~70 pJ fixed overhead + the cost of the operation itself; 45 nm numbers) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323); [Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)):
+
+* **Load/store:** 70 pJ + 10 pJ (L1 hit, data assumed to be in cache) = **80 pJ each** × 9 (8 loads + 1 store) = **720 pJ**
+* **FMA:** 70 pJ + 4.6 pJ (32 bit float multiply 3.7 pJ + float add 0.9 pJ) = **74.6 pJ each** × 4 = **298.4 pJ**
+* **Bias add:** 70 pJ + 0.9 pJ (32 bit float add) = **70.9 pJ**
+* **ReLU compare:** Horowitz does not list a separate compare cost, so we approximate it with the cost of an add: **70.9 pJ**
+
+**Total:** 720 + 298.4 + 70.9 + 70.9 = **1,160.2 pJ ≈ 1,160 pJ** for **15 separate instructions** (8 loads + 4 FMAs + 1 bias add + 1 ReLU compare + 1 store).
+
+**Reading the numbers:**
+
+* Every one of these 15 instructions pays its own ~70 pJ fetch, decode and dispatch cost. A CPU core cannot share that cost across many data elements the way the GPU and TPU do.
+* The 4 FMA instructions each combine a multiply and an add, yet each still costs about 75 pJ. Almost all of this is overhead; the actual multiply add work is only about **4.6 pJ** per FMA.
+* The 9 memory instructions (8 loads + 1 store) dominate: **720 of the 1,160 pJ** go into moving operands in and out, before and after any math happens.
+
+## 2.10 CPU: neuron energy cost summarized
+
+Energy for one neuron (≈1,160 pJ in total) ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323); [Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)):
+
+* 9 loads/store: **720 pJ**
+* Overhead of the 6 arithmetic instructions (6 × 70 pJ): **420 pJ**
+* Actual arithmetic (4 × 4.6 + 0.9 + 0.9): **≈20 pJ**
+
+**Why instruction overhead dominates:** of the ~440 pJ spent on the 6 arithmetic instructions, about **420 pJ** is the ~70 pJ per instruction overhead and only about 20 pJ is real math. The general principle that data movement and overhead, not arithmetic, dominate the energy of neural network hardware is also a central message of [Sze et al., 2017, Efficient Processing of Deep Neural Networks](https://arxiv.org/abs/1703.09039).
+
+**Caveat:** these are 45 nm numbers from 2014, so the absolute pJ values are old. What still holds is the **ratio** between instruction overhead and arithmetic, which is the actual point here.
+
+***
+
+# 3. How does a GPU Work?
+
+## 3.1 Mental model: threads, warps, thread blocks, grid
+
+A **thread** is the smallest unit of execution ("one lane" doing work). Threads are grouped into **warps of 32 threads** on NVIDIA GPUs ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)).
+
+The full hierarchy is ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)):
+
+* **Thread:** one lane, working on one data element, with no control logic of its own
+* **Warp:** 32 threads that execute together
+* **Thread block:** up to 1024 threads that share one pool of on chip memory (shared memory) and can synchronise with each other
+* **Grid:** all thread blocks launched for one kernel call
+
+Instead of a few large cores, a GPU has **many small Streaming Multiprocessors (SMs)**. All SMs share an L2 cache and a GDDR or HBM memory interface. The programmer chooses the number of threads per block (blockDim) and the number of blocks (gridDim) when launching a kernel. The hardware then assigns whole thread blocks to SMs and splits each block into warps of 32 for execution ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)).
+
+**A CPU thread is not the same as a GPU thread.** A CPU thread is an independent instruction stream with its own control logic. A GPU thread is one lane in a 32 wide group; the warp scheduler controls all 32 at once ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)).
+
+!image.png
+
+https://www.deskdecode.com/graphics-card/
+
+## 3.2 SIMT: one instruction, many lanes
+
+A warp runs in **SIMT** mode: *Single Instruction, Multiple Threads*. The GPU fetches and decodes **one instruction for the whole warp** and then executes it for all **active** threads, each on its own data ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)).
+
+* **CPU:** 1 instruction fetched → 1 ALU operation executed
+* **GPU (SIMT):** 1 instruction fetched → up to 32 ALU operations executed (one per lane)
+
+This is exactly the trick Horowitz describes: if the same operation is done on many data lanes, the instruction energy is shared and the machine's energy becomes dominated by the useful operation instead of the overhead ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+**Branch divergence:** if an `if/else` in the code is taken by only some lanes of a warp, the warp executes **each path one after the other**, switching off the lanes that should not take that path ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)). So divergence does not save fetch and decode work; it multiplies it.
+
+With **only 3 threads**, you still occupy **one warp**, but only lanes 0 to 2 are active ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)):
+
+```yaml
+warp lanes: [0] [1] [2]   [3] ... [31]
+active?     yes yes yes   no  ... no
+```
+
+## 3.3 Memory hierarchy and hiding latency
+
+**Memory used in our examples** ([NVIDIA Developer, Using Shared Memory in CUDA C/C++](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)):
+
+* **Global memory** = off chip DRAM: big, slow, energy expensive. This is where the kernel's inputs and outputs live.
+* **Shared memory** = on chip SRAM shared within a thread block: small, and much cheaper per access than DRAM.
+
+**Why an SM keeps many warps resident at once:** a warp that waits for a DRAM read (hundreds of cycles) would leave its ALUs idle. So an SM keeps many warps "resident" (loaded and ready) at the same time. As soon as one warp stalls, the scheduler switches to another warp that is ready ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)):
+
+* Warp A: running
+* Warp B: waiting on DRAM
+* When A stalls, the scheduler immediately runs B (or any other ready warp)
+
+This switch is essentially free, because every resident warp already has its own registers on chip, so nothing needs to be saved or restored ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)). That is why GPUs need **thousands of threads in flight**: there must always be another warp ready to run while others wait on memory.
+
+This is **throughput oriented latency hiding**, the opposite of a CPU's approach: a CPU uses large caches and branch prediction to try to **avoid** the stall in the first place ([NVIDIA Docs, CUDA C++ Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/); [Sutter, 2005, The Free Lunch Is Over](http://www.gotw.ca/publications/concurrency-ddj.htm)).
+
+## 3.4 Warm up example: adding 3 numbers on a GPU
+
+**Energy numbers we use (pJ per operation, 45 nm)**. This commonly used table comes from Bill Dally's NIPS 2015 tutorial, which takes the values from Horowitz ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf); also reproduced in [Stanford CS231n, 2017, Lecture 15](https://cs231n.stanford.edu/slides/2017/cs231n_2017_lecture15.pdf)):
+
+* **INT32 add:** 0.1 pJ
+* **32 bit float add:** 0.9 pJ
+* **32 bit float multiply:** 3.7 pJ
+* **32 bit SRAM read** (8 KB on chip memory, similar to "shared memory"): 5 pJ
+* **32 bit DRAM read** (global memory): 640 pJ
+
+These are not values for "your exact GPU", but they are great for *order of magnitude* comparisons.
+
+**Kernel goal**
+
+Inputs in global memory: `in = [14, 10, 7]`
+Output in global memory: `out[0] = 31`
+
+We launch **1 block with 3 threads**. The GPU computes the sum and **stores it to memory**. Later, the **CPU** copies `out[0]` back and calls `printf` (printing is typically done on the CPU side in real applications).
+
+**PTX style "assembly" for the GPU kernel, adding 3 numbers:**
+
+```nasm
+// == global memory pointers (conceptual) ==
+// in  : pointer to 3x u32 in global memory
+// out : pointer to 1x u32 in global memory
+
+.visible .entry sum3_kernel(.param .u64 in_ptr, .param .u64 out_ptr) {
+    // Registers
+    .reg .u32 r_tid, r_val, r_sum;
+    .reg .u64 r_in, r_out;
+
+    // Shared memory (on chip SRAM)
+    .shared .u32 shmem[3];
+
+    // == get thread id (0,1,2) ==
+    // (conceptual; real PTX uses special registers)
+    mov.u32 r_tid, %tid.x;
+
+    // == load input pointer, output pointer ==
+    ld.param.u64 r_in,  [in_ptr];
+    ld.param.u64 r_out, [out_ptr];
+
+    // == each thread loads one number from global and writes it to shared ==
+    // r_val = in[r_tid]
+    ld.global.u32 r_val, [r_in + 4*r_tid];
+    st.shared.u32 [shmem + 4*r_tid], r_val;
+
+    // == barrier: ensure all shared stores are visible ==
+    bar.sync 0;
+
+    // == thread 0 adds shmem[0] + shmem[1] + shmem[2] ==
+    @ (r_tid == 0) {
+        .reg .u32 a,b,c,t;
+
+        ld.shared.u32 a, [shmem + 0];
+        ld.shared.u32 b, [shmem + 4];
+        ld.shared.u32 c, [shmem + 8];
+
+        add.u32 t, a, b;
+        add.u32 r_sum, t, c;
+
+        // store result to system wide memory
+        st.global.u32 [r_out + 0], r_sum;
+    }
+
+    ret;
+}
+```
+
+`bar.sync` is the PTX barrier: it synchronises the threads of a block and makes earlier writes visible to all of them ([NVIDIA Docs, Parallel Thread Execution ISA](https://docs.nvidia.com/cuda/parallel-thread-execution/)).
+
+We assume:
+
+* the three input loads come from **DRAM/global** memory (worst case)
+* shared memory behaves like **SRAM** (cheap)
+* DRAM **writes** cost the same order of magnitude as DRAM reads, so we use the 640 pJ read value as the anchor ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf))
+
+### Threads 0, 1, 2 (same instruction, different lane)
+
+**A) `ld.global.u32 r_val, [in + 4*tid]`**
+
+Each active thread loads one 32 bit number from **global DRAM**. Threads active: **3**. Energy per 32 bit DRAM read: **640 pJ** ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+**Energy:** `3 × 640 pJ = 1920 pJ`
+
+**B) `st.shared.u32 shmem[tid] = r_val`**
+
+Each thread writes its value into **shared memory (on chip SRAM)** ([NVIDIA Developer, Using Shared Memory in CUDA C/C++](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)). The table gives **32 bit SRAM read = 5 pJ**; writes are of a similar size ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+**Energy (approx):** `3 × 5 pJ = 15 pJ`
+
+**C) `bar.sync 0`**
+
+All threads wait until everyone has written to shared memory; after the barrier, thread 0 can safely read `shmem[0..2]` ([NVIDIA Docs, Parallel Thread Execution ISA](https://docs.nvidia.com/cuda/parallel-thread-execution/)).
+
+**Energy:** not in the table (it is control and scheduling), but in this toy example it is small compared with DRAM.
+
+### Only thread 0 continues (reduction)
+
+**D) `ld.shared.u32 a,b,c`**
+
+Thread 0 reads three 32 bit values from shared memory: 3 reads × **5 pJ** ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+**Energy:** `3 × 5 pJ = 15 pJ`
+
+**E) `add.u32 t=a+b; add.u32 sum=t+c`**
+
+Two INT32 adds: 2 × **0.1 pJ** ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+**Energy:** `2 × 0.1 pJ = 0.2 pJ`
+
+**F) `st.global.u32 [out] = sum`**
+
+Thread 0 stores the result to global memory (DRAM) ([NVIDIA Docs, CUDA C++ Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)). We use the DRAM read value as the scale anchor ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+**Energy (order of magnitude):** ~**640 pJ**
+
+**Total energy for this 3 thread sum (dominated by memory):**
+
+* Global loads: **1920 pJ**
+* Shared writes (approx SRAM scale): **15 pJ**
+* Shared reads: **15 pJ**
+* Adds: **0.2 pJ**
+* Global store (order of magnitude): **~640 pJ**
+
+**Total ≈ 1920 + 15 + 15 + 0.2 + 640 = 2590.2 pJ**
+
+The punchline:
+
+```
+Compute (2 adds):             ~0.2 pJ   (tiny)
+On chip shared accesses:      ~30 pJ    (small)
+Off chip global DRAM traffic: ~2560 pJ  (dominates)
+```
+
+## 3.5 Our neuron on a GPU: energy cost, thread by thread
+
+Same neuron, now with **8 threads**: each thread loads **one** number (x₁..x₄ or w₁..w₄) from global memory and parks it in shared memory; then thread 0 multiplies the pairs, accumulates, adds the bias, applies ReLU and stores the result. Illustrative PTX style pseudocode:
+
+```nasm
+// all 8 threads (tid = 0..7): tid 0..3 hold x1..x4, tid 4..7 hold w1..w4
+ld.global.f32  %v, [buf + tid*4]    // read one number from global memory (DRAM)
+st.shared.f32  smem[tid], %v        // write it to on chip shared memory
+bar.sync 0                          // wait until all 8 numbers are in shared memory
+
+// thread 0 only: multiply, reduce, bias, ReLU
+ld.shared.f32  %s, smem[0..7]       // read the 8 numbers back from shared memory
+fma.f32        %acc, x_i, w_i, %acc // 4x: acc = acc + x_i * w_i
+add.f32        %acc, %acc, %bias    // add the bias b
+max.f32        %acc, %acc, 0.0      // ReLU
+st.global.f32  [y], %acc            // write the result y back to global memory (DRAM)
+```
+
+Note: there is **no ~70 pJ fetch cost per thread** here, because one instruction dispatch covers the whole warp. Instead, the cost is almost entirely in the DRAM round trips.
+
+**Energy breakdown** ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf); [Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)):
+
+* 8 × `ld.global` (DRAM read) @ 640 pJ = **5,120 pJ**
+* 8 × `st.shared` @ 5 pJ = **40 pJ**
+* 8 × `ld.shared` @ 5 pJ = **40 pJ**
+* Compute (4 FMA @ 4.6 pJ = 18.4 pJ, + bias add 0.9 pJ + ReLU compare ~0.9 pJ) = **≈20 pJ**
+* 1 × `st.global` (DRAM write) @ ~640 pJ = **640 pJ**
+* **Total = 5,120 + 40 + 40 + 20.2 + 640 = 5,860.2 pJ ≈ 5,860 pJ**
+
+**Worse, not better:**
+
+* Compute (4 FMA + bias + ReLU): ~20 pJ
+* On chip shared accesses: ~80 pJ
+* Off chip DRAM traffic: ~5,760 pJ (**~98%**)
+
+**Why is this about 5 times worse than the CPU (1,160 pJ), if GPUs are supposed to be the efficient option?** A GPU's efficiency comes from parallel **throughput**, not from any single operation being cheap. Two things are true at once:
+
+1. A GPU does **not** pay a ~70 pJ front end tax per thread per instruction the way a CPU does: in SIMT, one instruction fetch and decode is shared by up to 32 threads ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)). On that point the GPU looks good.
+2. But in our example the GPU has to pull every input and weight from off chip DRAM (640 pJ each), while in the CPU example we **assumed** all data was already in the L1 cache (10 pJ each). A big part of the difference therefore comes from **where the data lives**, not only from the chip type ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf)).
+
+One isolated neuron cannot fill a GPU's 32 wide warp: our kernel uses only 8 threads, a quarter of one warp, and there are no other warps to switch to while it waits on DRAM. So the latency hiding mechanism (the main reason GPUs are efficient) cannot work at all. GPUs only win when there is **enough work** to spread the fixed cost of each DRAM access over thousands of threads that **reuse** the same loaded values (e.g. batching thousands of neurons or tokens through the same weights). This is the **roofline model** idea: a processor needs high **arithmetic intensity** (many operations per byte moved from memory) to reach its peak, and one neuron has very low arithmetic intensity ([Williams et al., 2009, Roofline](https://dl.acm.org/doi/10.1145/1498765.1498785)).
+
+**Caveat:** these are again 45 nm era numbers, so treat this as an order of magnitude illustration, not a measurement on real silicon.
+
+And that's why GPUs (and accelerators in general) care about reusing data on chip (shared memory, L2, registers), doing lots of math per byte loaded, and running many threads so memory latency can be hidden by switching warps ([NVIDIA Docs, CUDA C++ Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)).
+
+***
+
+# 4) CPU vs GPU
+
+## 4.1 Why do GPUs beat CPUs for Machine Learning?
+
+A **CPU** spends a lot of silicon and energy on *general purpose control*: branch prediction, speculative execution, out of order scheduling, big caches, etc. ([Sutter, 2005, The Free Lunch Is Over](http://www.gotw.ca/publications/concurrency-ddj.htm); [Hardavellas, 2012, The Rise and Fall of Dark Silicon](https://www.usenix.org/publications/login/april-2012/rise-and-fall-dark-silicon)). That makes CPUs great for **latency sensitive, branchy, irregular** workloads.
+
+A **GPU** spends silicon on *many simple lanes* plus high memory bandwidth: thousands of threads, SIMT throughput, and hardware that hides memory latency by swapping warps ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)). That makes GPUs great for **regular, data parallel, high arithmetic intensity** workloads (ML training and inference, dense linear algebra, image and video processing, simulations) ([NVIDIA Docs, CUDA C++ Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)).
+
+**Key contrast:**
+
+> CPUs optimise the time to the first result for one thread; GPUs optimise results per second for many threads.
+
+## 4.2 Parallelism type: ILP vs TLP
+
+A CPU uses **ILP** (instruction level parallelism) inside a core: it looks for independent instructions in one instruction stream and runs them at the same time ([Rau & Fisher, 1993, Instruction Level Parallel Processing: History, Overview, and Perspective](https://doi.org/10.1007/BF01205181)). This has a limit: real programs expose only about 5 to 7 independent instructions at a time (the "ILP wall") ([Wall, 1991, Limits of Instruction Level Parallelism](https://people.ee.duke.edu/~sorin/ece652/wall.pdf)). A GPU uses **TLP** (thread level parallelism): if one warp stalls on memory, the SM runs another warp ([NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)).
+
+## 4.3 Memory model: cache hierarchy vs bandwidth and locality discipline
+
+A CPU uses a deep cache hierarchy to reduce DRAM stalls (Cheng, n.d., Memory Hierarchy Lecture Notes). This is its answer to the memory wall, the growing gap between processor speed and memory speed ([Wulf & McKee, 1995, Hitting the Memory Wall](https://dl.acm.org/doi/10.1145/216585.216588); [Wilkes, 2001, The Memory Gap and the Future of High Performance Memories](https://www.cl.cam.ac.uk/research/dtg/attarchive/pub/docs/ORL/tr.2001.4.pdf)). A GPU expects **you** to structure memory accesses (coalescing, reuse in shared memory and L2), because DRAM traffic dominates energy ([Dally, 2015, High Performance Hardware for Machine Learning](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf); [NVIDIA Docs, CUDA C++ Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)).
+
+***
+
+# 5) TPU (Tensor Processing Unit)
+
+## 5.1 What is a TPU? Built around one operation: matmul
+
+A **TPU** is an accelerator designed around **tensor contractions**, especially **matrix multiplication (matmul, also called GEMM)**, because modern ML workloads reduce to repeated matmul like operations ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
+
+* A **CPU** uses many instructions and strong control flow.
+* A **GPU** uses many threads plus tensor cores as a general accelerator.
+* A **TPU** takes a "matmul first" design, with a compiler/runtime that maps the model graph onto systolic matrix hardware ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
+
+The canonical tensor operation is:
+
+$$
+Y = XW + b
+$$
+
+**Why matmul is (almost) all a TPU needs to be fast at:**
+
+* **Dense/linear layers:** y = Wx + b is a matmul ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
+* **Attention:** Q·Kᵀ and then the multiplication with V are two chained matmuls ([Vaswani et al., 2017, Attention Is All You Need](https://arxiv.org/abs/1706.03762)).
+* **Convolution:** can be unrolled into a matmul (e.g. with the "im2col"/Toeplitz trick) ([Sze et al., 2017, Efficient Processing of Deep Neural Networks](https://arxiv.org/abs/1703.09039)). The TPU v1 matrix unit can directly perform either a matrix multiply or a convolution ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
+
+## 5.2 What does a TPU look like inside?
+
+Using Google's first TPU (TPU v1) as the example ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)):
+
+* **Systolic MAC array (Matrix Multiply Unit):** 256 × 256 = **65,536** 8 bit multiply accumulate cells.
+* **Unified Buffer (SRAM):** 24 MiB on chip memory for intermediate results (28 MiB of on chip memory in total).
+* **Control and host I/O:** the host server sends instructions over PCIe; the TPU does not fetch its own instructions.
+
+**Why the array dominates the die:** the TPU has none of the features that CPUs and GPUs use to speed up the average case: no caches, no branch prediction, no out of order execution, no multithreading. Matmul has no branches to predict. On the TPU v1 die, the Unified Buffer takes almost a third and the matrix unit a quarter, so the datapath is nearly two thirds of the die, while **control is only 2%** ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
+
+## 5.3 How a systolic array actually computes it
+
+Two ways to describe the same matmul for our neuron:
+
+**① What the compiler sees:** one high level operation, with no separate loads, multiplies or adds (simplified MHLO/StableHLO style; the bias add and ReLU are separate operations) ([OpenXLA, StableHLO Specification](https://openxla.org/stablehlo/spec)):
+
+```nasm
+%z = "stablehlo.dot_general"(%x, %w)   // tensor<1x4xf32> · tensor<4x1xf32> → tensor<1x1xf32>
+%y = "stablehlo.add"(%z, %b)           // + bias
+%r = "stablehlo.maximum"(%y, %zero)    // ReLU
+```
+
+**② What the array executes:** one dispatch drives all 4 MACs:
+
+```nasm
+LOAD    w[0..3] → PE[0..3]      // weights enter from the top and stay in place
+STREAM  x[0..3] → array         // activations flow in from the left
+MAC     x[i]*w[i], all 4        // every PE multiplies and adds, all at once
+DRAIN   sum → +bias → y         // finished sum leaves the array, bias and ReLU are applied
+```
+
+**How it works** ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)):
+
+* **Weights (w)** are loaded once from the top and stay resident in each Processing Element (PE).
+* **Activations (x)** stream in from the left, one row per cycle.
+* Each PE does one multiply accumulate per cycle and passes its result to its neighbour; **partial sums accumulate down each column** and leave the array at the bottom already summed.
+* A wave of computation moves diagonally across the array without a single extra instruction fetch. The array's own wiring moves the data between operations, instead of a fetched instruction per step.
+* Why systolic? Reading a large SRAM costs much more energy than arithmetic, and the systolic design saves energy by **reducing reads and writes of the Unified Buffer**.
+
+**Compare:** the CPU needed **15 instructions** for this neuron; the TPU needs one matrix operation.
+
+## 5.4 Our neuron on a TPU
+
+A single isolated neuron cannot show a TPU's real advantage, but we can estimate the **best case energy per operation** from published chip specs:
+
+* **Edge TPU:** Google specifies **4 TOPS at 2 W**, i.e. **2 TOPS per watt** ([Google Coral, Edge TPU FAQ](https://coral.ai/docs/edgetpu/faq/)). 1 / (2 × 10¹² ops/J) = **0.5 pJ per operation**.
+* **TPU v1:** 92 TOPS peak (8 bit), and it typically draws **40 W** while busy (its TDP, the power the cooling must be designed for, is **75 W**) ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)). 40 W / 92 × 10¹² ops/s ≈ **0.43 pJ per operation** (≈0.8 pJ per operation if you use the 75 W TDP).
+
+**Careful: "per operation" is not "per MAC".** TOPS counts one MAC as **two** operations (a multiply and an add). You can check this for TPU v1: 65,536 MACs × 700 MHz × 2 = 91.8 × 10¹² ≈ 92 TOPS ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)). So the energy per **MAC** is about **0.9 pJ** for TPU v1 (at 40 W) and about **1 pJ** for the Edge TPU (assuming Google uses the same convention).
+
+**These numbers are a floor, not a prediction for our neuron.** They assume the whole array is kept busy. Our 4 input neuron would use ~4 of the 65,536 MACs (about 0.006% utilisation).
+
+**Why TPUs are efficient anyway:**
+
+* **Weight stationary reuse:** weights stay resident in the array across thousands of MACs instead of making a DRAM round trip for every neuron ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
+* **One instruction drives a whole array of MACs**, so the CPU style ~70 pJ fetch and decode tax is paid once, not per operation. TPU instructions are long and complex (CISC style) and a single matrix instruction keeps the array busy for many cycles ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
+* Horowitz makes the same point in general terms: the best energy efficiency needs very cheap operations (short integers, 8 to 16 bit) **and** extreme locality, with tens of operations per local memory fetch and roughly a thousand operations per DRAM fetch, exactly the pattern of matmul and convolution ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+
+***
+
+# 6) NPU (Neural Processing Unit)
+
+## 6.1 What is an NPU?
+
+An **NPU** is the on device, "always there" accelerator for neural networks (mostly matmul, convolution and attention kernels). It is designed to be power efficient (high TOPS per watt), good at low precision inference (INT8 and similar), and it is integrated into laptops and phones next to the CPU and GPU ([IEEE Spectrum, 2025, Your Laptop Isn't Ready for LLMs. That's About to Change](https://spectrum.ieee.org/ai-models-locally)). IEEE Spectrum frames the shift to local AI in exactly this way: the most obvious way to boost a laptop's AI performance is to place a powerful NPU next to the CPU, and because NPUs are built only for matrix operations (and not for things like 3D graphics) they are more power efficient than GPUs ([IEEE Spectrum, 2025, Your Laptop Isn't Ready for LLMs. That's About to Change](https://spectrum.ieee.org/ai-models-locally)).
+
+## 6.2 What does an NPU look like inside?
+
+**The NPU is not a separate chip.** It is a block inside the same laptop SoC package as the CPU and GPU cores, and it shares the package's power budget and memory ([Hot Hardware, 2023, Meteor Lake Architecture Revealed](https://hothardware.com/reviews/intel-meteor-lake-architecture?page=4); [Chips and Cheese, 2024, Intel Meteor Lake's NPU](https://chipsandcheese.com/p/intel-meteor-lakes-npu)). (Depending on the design, it sits on the same die, like AMD's Ryzen AI 300, or on a separate tile of the same package, like the SoC tile of Intel's Meteor Lake.)
+
+Inside a typical NPU (Intel Meteor Lake as the example) ([Hot Hardware, 2023, Meteor Lake Architecture Revealed](https://hothardware.com/reviews/intel-meteor-lake-architecture?page=4); [Chips and Cheese, 2024, Intel Meteor Lake's NPU](https://chipsandcheese.com/p/intel-meteor-lakes-npu)):
+
+* **MAC array:** a grid of multiply accumulate units for low precision data. Meteor Lake has 2 Neural Compute Engines with 2,048 MACs per cycle each, supporting INT8 and FP16 (other NPUs also support INT4 or block FP16).
+* **SRAM scratchpad:** a local memory that keeps weights and activations close to the MACs, so the NPU does not have to go to main memory all the time.
+* **DMA engine:** moves data from shared system memory into the scratchpad.
+* **Shared system memory controller (LPDDR):** the NPU has **no dedicated HBM of its own**; it uses the same system memory as the CPU and GPU.
+
+## 6.3 How an NPU actually works
+
+* A **small array of INT8/INT4 MAC units**: far fewer than a GPU has, but built for exactly this operation. Example: Meteor Lake has 4,096 MACs; 4,096 × 1.4 GHz × 2 operations per MAC ≈ **11.5 TOPS**, which is where the "11 TOPS" figure comes from ([Fei & Abdelfattah, 2024, NITRO: LLM Inference on Intel Laptop NPUs](https://arxiv.org/abs/2412.11053)).
+* A **local SRAM scratchpad** keeps weights and activations close to the MACs; a **DMA engine** streams data in from shared system memory ([Hot Hardware, 2023, Meteor Lake Architecture Revealed](https://hothardware.com/reviews/intel-meteor-lake-architecture?page=4)).
+* **Fixed function, not general purpose:** it runs a narrow set of neural network operators well instead of arbitrary code, so it needs little of a CPU's or GPU's control logic ([IEEE Spectrum, 2025, Your Laptop Isn't Ready for LLMs. That's About to Change](https://spectrum.ieee.org/ai-models-locally)).
+* **Tuned for small batches** (often a single inference at a time) at a few watts.
+
+## 6.4 Why NPUs suddenly matter for the "AI" wave
+
+Microsoft's Copilot+ PC guidance states that many new Windows AI features require an NPU that can run at **40+ TOPS** ([Microsoft Learn, Copilot+ PCs developer guide](https://learn.microsoft.com/windows/ai/npu-devices)). That is the clear market hook for "why NPUs suddenly show up everywhere". Local LLM inference needs sustained low power AI compute, and laptops increasingly add NPUs next to the CPU and GPU to make local inference feasible ([IEEE Spectrum, 2025, Your Laptop Isn't Ready for LLMs. That's About to Change](https://spectrum.ieee.org/ai-models-locally)).
+
+**NPU performance (TOPS, marketed figures):**
+
+* Intel Core Ultra (Meteor Lake): **11 TOPS** ([Notebookcheck, Intel Core Ultra 7 155H](https://www.notebookcheck.net/Intel-Core-Ultra-7-155H-Processor-Benchmarks-and-Specs.783323.0.html))
+* AMD Ryzen AI 300 series: **50 TOPS** ([AnandTech, 2024, AMD Announces the Ryzen AI 300 Series](https://www.anandtech.com/show/21419/amd-announces-the-ryzen-ai-300-series-for-mobile-zen-5-with-rdna-35-and-xdna2-npu-with-50-tops))
+* Qualcomm Snapdragon X: **45 TOPS** ([Qualcomm, 2024, Snapdragon X Series press release](https://www.edge-ai-vision.com/?p=48050))
+
+Note that Meteor Lake (11 TOPS) does **not** reach the 40 TOPS Copilot+ requirement, while Ryzen AI 300 and Snapdragon X do ([Microsoft Learn, Copilot+ PCs developer guide](https://learn.microsoft.com/windows/ai/npu-devices)).
+
+## 6.5 Our neuron on an NPU: no honest pJ number exists
+
+We cannot give a pJ per MAC value for an NPU the way we did for the TPU. AMD, Qualcomm and Intel publish **whole chip TOPS** and a **whole SoC power envelope** (e.g. 15 to 54 W configurable TDP for the Ryzen AI 9 HX 370), but **not the power draw of the NPU block on its own**, because the NPU shares one die (or package) and one power budget with the CPU and GPU cores ([AnandTech, 2024, AMD Announces the Ryzen AI 300 Series](https://www.anandtech.com/show/21419/amd-announces-the-ryzen-ai-300-series-for-mobile-zen-5-with-rdna-35-and-xdna2-npu-with-50-tops)). Asking for "the NPU's wattage" means asking to split one shared power rail.
+
+The closest thing to an efficiency figure is a marketing claim: Qualcomm states its Hexagon NPU can reach "up to 24 TOPS/W" peak in specific use cases such as super resolution ([Qualcomm, 2024, Snapdragon X Series press release](https://www.edge-ai-vision.com/?p=48050)). That would be about 0.04 pJ per operation, but it is a best case vendor number for one workload, not an independently measured value, so we do not use it for comparison.
+
+This is the structural difference with the TPU: a TPU (like the Edge TPU) is sold as its own chip with its own power supply, so its efficiency can be measured on its own. An NPU is a block embedded in someone else's SoC, so it cannot.
+
+***
+
+# 7) Some hardware examples
+
+Transistor counts and exact memory details are **not always publicly disclosed** for laptop SoCs and NPUs; when they aren't, we say so rather than guess.
+
+## 7.1 Representative examples (2025 to early 2026)
+
+### CPU example (laptop SoC / general compute)
+
+**Intel Core Ultra 7 155H (Meteor Lake)** ([Intel, Core Ultra 7 155H product page](https://www.intel.com/content/www/us/en/products/sku/236847/intel-core-ultra-7-processor-155h-24m-cache-up-to-4-80-ghz/ordering.html); [Notebookcheck, Intel Core Ultra 7 155H](https://www.notebookcheck.net/Intel-Core-Ultra-7-155H-Processor-Benchmarks-and-Specs.783323.0.html)):
+
+* Base power **28 W**, max turbo power **115 W**, 24 MB cache.
+* 16 cores (6 performance + 10 efficiency), NPU with **11 TOPS** (INT8).
+* Meteor Lake uses a **multi tile** design: the CPU tile is made in Intel 4, the graphics tile in TSMC N5 and the SoC and I/O tiles in TSMC N6, all stacked on a 22 nm base tile with Intel's Foveros packaging ([Notebookcheck, Intel Core Ultra 7 155H vs 165H](https://www.notebookcheck.com/Ultra-7-155H-vs-Ultra-7-165H_16906_16905.247552.0.html)).
+
+### GPU example (discrete high end, very clear public specs)
+
+**NVIDIA GeForce RTX 4090** ([TechPowerUp, GeForce RTX 4090 specifications](https://www.techpowerup.com/gpu-specs/geforce-rtx-4090.c3889); [Engadget, 2022, NVIDIA's $1,599 GeForce RTX 4090](https://www.engadget.com/nvidia-rtx-4090-announced-152529456.html)):
+
+* 24 GB GDDR6X memory.
+* Made in TSMC's **4N** process, developed together by NVIDIA and TSMC.
+* Total graphics power **450 W**; launch price **$1,599** (October 2022).
+* The AD102 chip has **76.3 billion** transistors on a 608 mm² die ([TechPowerUp, NVIDIA AD102 Ada](https://www.techpowerup.com/forums/goto/post?id=4839072)).
+
+### TPU example (edge inference accelerator)
+
+**Google Coral Edge TPU (M.2 / Mini PCIe accelerators)** ([Google Coral, Mini PCIe Accelerator](https://www.coral.ai/products/pcie-accelerator); [Google Coral, Edge TPU FAQ](https://coral.ai/docs/edgetpu/faq/)):
+
+* Accelerator cards start at **$24.99** (MSRP of the Mini PCIe version).
+* **4 TOPS at 2 W** (2 TOPS per watt).
+
+### NPU examples (integrated into "AI PCs")
+
+* **AMD Ryzen AI 300 series:** XDNA 2 NPU, up to **50 TOPS**, built on a 4 nm process ([AnandTech, 2024, AMD Announces the Ryzen AI 300 Series](https://www.anandtech.com/show/21419/amd-announces-the-ryzen-ai-300-series-for-mobile-zen-5-with-rdna-35-and-xdna2-npu-with-50-tops)).
+* **Qualcomm Snapdragon X series:** Hexagon NPU, **45 TOPS** ([Qualcomm, 2024, Snapdragon X Series press release](https://www.edge-ai-vision.com/?p=48050)).
+* **Intel Core Ultra (Meteor Lake):** **11 TOPS** NPU; the whole chip (CPU + GPU + NPU) adds up to about 34 TOPS ([Notebookcheck, Intel Core Ultra 7 155H](https://www.notebookcheck.net/Intel-Core-Ultra-7-155H-Processor-Benchmarks-and-Specs.783323.0.html); [Fei & Abdelfattah, 2024, NITRO](https://arxiv.org/abs/2412.11053)).
+
+## 7.2 Chips comparison (2025 to 2026)
+
+**What is TDP?** TDP (Thermal Design Power) is the amount of heat the cooling system must be able to remove when the chip runs at full load. It sets how much power and cooling has to be provisioned. It is **not** the same as the power a chip actually draws at a given moment, which is often lower (and can briefly be higher, e.g. during "turbo") ([Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)). For example, TPU v1 has a 75 W TDP but typically draws about 40 W when busy. Intel uses "base power" (28 W for the 155H) and "max turbo power" (115 W) instead of one TDP number.
+
+* **CPU: Intel Core Ultra 7 155H**
+  * Power: 28 W base / 115 W max turbo
+  * Memory: system RAM (DDR5/LPDDR5x) + 24 MB cache
+  * Node: multi tile (Intel 4 + TSMC N5/N6)
+* **GPU: NVIDIA RTX 4090**
+  * Power: ~450 W total graphics power
+  * Memory: 24 GB GDDR6X
+  * Node: TSMC 4N
+* **TPU (edge): Google Coral Edge TPU**
+  * Power: ~2 W
+  * Memory: small on chip SRAM + host RAM
+  * Node: not publicly disclosed
+* **NPU: AMD Ryzen AI 300**
+  * Power: whole laptop SoC TDP (e.g. 15 to 54 W for the HX 370); NPU alone: not published
+  * Memory: unified system memory
+  * Node: 4 nm (whole SoC)
+* **NPU: Qualcomm Snapdragon X**
+  * Power: whole mobile SoC envelope; NPU alone: not published
+  * Memory: unified system memory (LPDDR5x)
+  * Node: SoC from the vendor, not relevant separately for the NPU
+
+Transistor counts for laptop SoCs and NPUs are often not disclosed.
+
+***
+
+# 8) The physical cost of making the chip at all
+
+Every chip in this lecture has a footprint **before it computes a single FLOP**: the one left when it is manufactured.
+
+## 8.1 Manufacturing dominates
+
+* **Laptops:** for many laptops the manufacturing phase is the biggest part of the lifetime carbon footprint. For example, Dell's own product carbon footprint for the XPS 13 9340 attributes **83.4%** to manufacturing ([Dell, XPS 13 9340 Product Carbon Footprint](https://www.delltechnologies.com/asset/zh-tw/products/laptops-and-2-in-1s/technical-support/xps-13-9340-pcf-datasheet.pdf)). Across Dell's recent business laptops the manufacturing share ranges from roughly 62% to 78% ([Climatiq, Dell Latitude 7450 product data](https://www.climatiq.io/data/product/dell-technologies-inc-latitude-7450-europe-0ff25a8b-363e-4b4b-bb70-bfc820ee21f2); [Climatiq, Dell Latitude 5455 product data](https://www.climatiq.io/data/product/dell-technologies-inc-latitude-5455-usa-c926fcc9-5d9a-4d9e-aa6d-62dd1aaee9fe)). So manufacturing typically accounts for **about 60% to 85%** of a laptop's footprint, before it ever runs on battery power.
+* **Chips worldwide:** the production of integrated circuits alone causes about **185 million tonnes of CO₂ equivalent per year** ([imec, 2025, How can we reduce the environmental impact of chip manufacturing?](https://www.imec-int.com/en/articles/how-can-we-reduce-environmental-impact-chip-manufacturing), originally published in Semiconductor Digest).
+* **AI data centres:** about **30%** of the total carbon footprint of an AI data centre is embodied in the chips themselves ([imec, 2025, How can we reduce the environmental impact of chip manufacturing?](https://www.imec-int.com/en/articles/how-can-we-reduce-environmental-impact-chip-manufacturing)).
+
+## 8.2 Water and chemicals, not just carbon
+
+* **Water:** a large chip fab can use up to **38 million litres of water per day** ([Taiwan News, 2023, Water use in semiconductor manufacturing](https://www.taiwannews.com.tw/en/news/4970665)). TSMC reports a total water usage of about **104.7 million m³ (≈105 billion litres) in 2022** ([TSMC, 2022 Annual Report, p. 161](https://investor.tsmc.com/static/annualReports/2022/english/ebook/files/basic-html/page161.html)).
+* **Chemicals and process steps:** manufacturing a single semiconductor chip requires about **500 different process chemicals** ([American Chemistry Council, Chemistry in Semiconductors and Electronics](https://americanchemistry.com/content/download/16791/file/Chemistry-in-Semiconductors-and-Electronics.pdf)), and the number of front end processing steps can easily exceed **1,000** ([Infineon, From Sand to Smart City](https://www.infineon.com/cms/en/product/promopages/from-sand-to-smart-city/)).
+
+## 8.3 What this means
+
+Extending a device's working life, and only buying hardware you will actually use, is one of the most effective levers available, often more effective than any software optimisation.
+
+It is also not just an energy story. A frontier accelerator like the NVIDIA H100 is made on TSMC's **4N** node (the newer Blackwell B200 on **4NP**) and depends on **CoWoS** advanced packaging. The four largest AI chip designers (NVIDIA, Google, AMD, Amazon) consumed **over 90%** of the world's CoWoS packaging capacity and HBM memory supply in 2025, with NVIDIA as the largest single buyer ([Epoch AI, AI chip supply chain constraints](https://epoch.ai/data-insights/ai-chip-supply-chain-constraints)). **Concentration risk, not only carbon**, is part of the true cost of a chip.
+
+***
+
+# 9) The anatomy of an NVIDIA GPU
+
+Following one accelerator from design to a server rack:
+
+1. **TSMC (Taiwan):** makes the 4N/4NP logic die and does the CoWoS packaging ([Epoch AI, AI chip supply chain constraints](https://epoch.ai/data-insights/ai-chip-supply-chain-constraints)).
+2. **SK Hynix / Samsung / Micron:** make the HBM memory stacks. HBM is produced by only these three companies ([Epoch AI, AI Chip Components documentation](https://epoch.ai/data/ai-chip-components-documentation/faq)).
+3. **NVIDIA (USA design, global assembly):** module assembly and validation.
+4. **OEM partners (Dell, HPE, Supermicro, ...):** server and rack integration ([Introl, 2026, xAI's Memphis Colossus](https://introl.com/blog/xai-memphis-colossus-100000-gpu-supercomputer-infrastructure)).
+
+**What is on the module (schematic cross section):** the GPU logic die in the middle, with HBM stacks next to it, side by side on a **CoWoS silicon interposer** (a thin silicon wiring layer that allows dense, short connections between logic and memory), which sits on a package substrate ([Epoch AI, 2026, Introducing the AI Chip Components Explorer](https://epoch.ai/blog/introducing-the-ai-chip-components-explorer)).
+
+**Key numbers:**
+
+* **Price:** an H100 typically sells for about **$25,000 to $40,000** per GPU, and a B200 for about $30,000 to $50,000. NVIDIA has never published an official list price for its data centre GPUs, so these are market estimates ([IntuitionLabs, 2026, NVIDIA AI GPU Pricing Guide](https://intuitionlabs.ai/articles/nvidia-ai-gpu-pricing-guide)).
+* **Lead time:** as of early 2026, GPU procurement lead times were reported at **36 to 52 weeks** (hyperscaler allocation, HBM and CoWoS all constrained at once) ([Axe Compute, 2026, Full Year 2025 Financial Results](https://app.edgar.tools/filing/1446159/0001171843-26-003492/exh_991.htm)). Note: this figure comes from a company that sells GPU capacity.
+* **TSMC 4N/4NP:** a customised 5 nm class process, developed together by NVIDIA and TSMC ([Engadget, 2022, NVIDIA's $1,599 GeForce RTX 4090](https://www.engadget.com/nvidia-rtx-4090-announced-152529456.html); [Epoch AI, AI Chip Components documentation](https://epoch.ai/data/ai-chip-components-documentation)).
+* **CoWoS packaging:** the advanced packaging step that bottlenecked AI chip production in late 2024 and early 2025; the top four designers still take roughly 80% to 85% of total CoWoS supply ([Epoch AI, 2026, Introducing the AI Chip Components Explorer](https://epoch.ai/blog/introducing-the-ai-chip-components-explorer)).
+
+**How many suppliers does one GPU module depend on?** At minimum: the logic die and advanced packaging (TSMC), HBM memory (SK Hynix, Samsung or Micron), the package substrate, power delivery components, the board and the thermal solution. In practice a single GPU module depends on many specialised suppliers across memory, substrate and power delivery before it ever reaches a server (the exact number is not published).
+
+***
+
+# 10) From one GPU to a data centre
+
+A concrete example of a very large AI data centre: **xAI's Colossus cluster in Memphis** ([Introl, 2026, xAI's Memphis Colossus](https://introl.com/blog/xai-memphis-colossus-100000-gpu-supercomputer-infrastructure)):
+
+* **~230,000 GPUs:** 150,000 H100 + 50,000 H200 + 30,000 GB200.
+* **~250 MW** power draw; on site power includes **35 gas turbines** (up to 420 MW) and **208 Tesla Megapacks** (batteries).
+* **Racks:** Supermicro liquid cooled racks with **64 GPUs per rack**; the first 100,000 GPU phase used about **1,500 racks**.
+* **Build time:** **122 days** for the first 100,000 GPUs, then **92 more days** to double to 200,000.
+
+Scale this up: the ~185 Mt CO₂e per year from chip manufacturing (Section 8) is exactly what clusters like this multiply, accelerator by accelerator. And every one of those GPUs is still running the same four input neuron, multiplied by billions.
+
+***
+
+# 11) Same constraints, four different bets
+
+* **CPU**
+  * Optimises single thread latency
+  * ILP within one core
+  * Deep caches hide DRAM stalls
+  * Best for: branchy, irregular code
+* **GPU**
+  * Optimises many thread throughput
+  * TLP across warps
+  * Bandwidth + shared memory reuse
+  * Best for: regular, data parallel math
+* **TPU**
+  * Optimises matmul throughput
+  * One instruction drives thousands of MACs
+  * Weight stationary reuse
+  * Best for: large, batched linear algebra
+* **NPU**
+  * Optimises TOPS per watt at low power
+  * Same idea as the TPU, tuned for always on edge use
+  * Shares the SoC die/package and power budget
+  * Best for: sustained on device AI (Copilot+ features, local LLMs)
+
+(Sources: [Sutter, 2005, The Free Lunch Is Over](http://www.gotw.ca/publications/concurrency-ddj.htm); [NVIDIA Docs, CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/); [Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760); [IEEE Spectrum, 2025, Your Laptop Isn't Ready for LLMs. That's About to Change](https://spectrum.ieee.org/ai-models-locally))
+
+***
+
+# 12) Recap
+
+* **ILP wall:** real code exposes only about 5 to 7 independent instructions at a time, so making cores wider stops paying off ([Wall, 1991, Limits of Instruction Level Parallelism](https://people.ee.duke.edu/~sorin/ece652/wall.pdf)).
+* **Power wall:** dynamic power is P ≈ C·V²·f. Because supply voltage stopped scaling while clock frequency kept rising, processors hit the air cooling limit of about 100 W, and increasing GHz became thermally and economically unsustainable ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+* **Memory wall:** a DRAM access takes **hundreds of clock cycles** (already about 128 cycles on a 2000 era workstation, and more today), while a floating point multiply takes only about **4 cycles**. Caches only partly help ([Wilkes, 2001, The Memory Gap and the Future of High Performance Memories](https://www.cl.cam.ac.uk/research/dtg/attarchive/pub/docs/ORL/tr.2001.4.pdf); [Fog, Instruction Tables](https://www.agner.org/optimize/instruction_tables.pdf)).
+* **Energy efficiency ceiling:** CMOS has a physical limit on how many operations per joule it can deliver; with voltage scaling over, power (not transistor count) is now the main limit on computing performance ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323)).
+* **Different bets:** the CPU chases single thread latency; the GPU chases many thread throughput.
+* **Specialisation wins:** TPUs and NPUs trade generality for far better performance per watt on matmul heavy AI workloads. Specialised hardware can be 2 to 3 orders of magnitude more energy efficient than a processor based solution ([Horowitz, 2014, Computing's Energy Problem](https://ieeexplore.ieee.org/document/6757323); [Jouppi et al., 2017, In Datacenter Performance Analysis of a Tensor Processing Unit](https://arxiv.org/abs/1704.04760)).
+
+**Sustainability recommendation:** these accelerators are indispensable, but they typically come with a hardware warranty of only about **3 years** from the OEM ([NVIDIA Docs, Virtual GPU Software Lifecycle](https://docs.nvidia.com/vgpu/news/vgpu-software-lifecycle-on-supported-gpus/index.html)); longer support (e.g. 4 or 5 years) usually has to be bought separately as a support contract ([Scan, NVIDIA DGX Support](https://scan.co.uk/business/nvidia-dgx-system-support)). In practice many are replaced by newer generations rather than upgraded once that window closes. Plan hardware lifecycles around this reality, not around the theoretical lifespan of the silicon.
+
+***
+
+# Sources
+
+* Horowitz, M. (2014). 1.1 Computing's energy problem (and what we can do about it). ISSCC 2014, pp. 10 to 14. [IEEE Xplore](https://ieeexplore.ieee.org/document/6757323) · [free PDF](https://gwern.net/doc/cs/hardware/2014-horowitz-2.pdf)
+* Dally, W. (2015). High Performance Hardware for Machine Learning. NIPS 2015 Tutorial. [Slides](https://media.nips.cc/Conferences/2015/tutorialslides/Dally-NIPS-Tutorial-2015.pdf) · table reproduced in [Stanford CS231n 2017, Lecture 15](https://cs231n.stanford.edu/slides/2017/cs231n_2017_lecture15.pdf)
+* Hardavellas, N. (2012). The Rise and Fall of Dark Silicon. USENIX ;login: 37(2). [USENIX](https://www.usenix.org/publications/login/april-2012/rise-and-fall-dark-silicon) · [PDF](https://users.cs.northwestern.edu/~hardav/paragon/papers/2012-USENIXLogin-DarkSilicon-Hardavellas.pdf)
+* Hirki, M., Ou, Z., Khan, K. N., Nurminen, J. K., & Niemi, T. (2016). Empirical Study of the Power Consumption of the x86 64 Instruction Decoder. USENIX CoolDC '16. [USENIX](https://www.usenix.org/conference/cooldc16/workshop-program/presentation/hirki)
+* Wall, D. W. (1991). Limits of Instruction Level Parallelism. ASPLOS IV, pp. 176 to 188. [PDF](https://people.ee.duke.edu/~sorin/ece652/wall.pdf)
+* Rau, B. R., & Fisher, J. A. (1993). Instruction Level Parallel Processing: History, Overview, and Perspective. The Journal of Supercomputing 7. [Springer](https://doi.org/10.1007/BF01205181)
+* Wulf, W. A., & McKee, S. A. (1995). Hitting the Memory Wall: Implications of the Obvious. Computer Architecture News 23(1). [ACM](https://dl.acm.org/doi/10.1145/216585.216588)
+* Wilkes, M. V. (2001). The Memory Gap and the Future of High Performance Memories. AT&T Laboratories Cambridge. [PDF](https://www.cl.cam.ac.uk/research/dtg/attarchive/pub/docs/ORL/tr.2001.4.pdf)
+* Sutter, H. (2005). The Free Lunch Is Over. Dr. Dobb's Journal 30(3). [gotw.ca](http://www.gotw.ca/publications/concurrency-ddj.htm)
+* Fog, A. The microarchitecture of Intel, AMD and VIA CPUs. [PDF](https://www.agner.org/optimize/microarchitecture.pdf) · Instruction tables. [PDF](https://www.agner.org/optimize/instruction_tables.pdf)
+* Williams, S., Waterman, A., & Patterson, D. (2009). Roofline: An Insightful Visual Performance Model for Multicore Architectures. CACM 52(4). [ACM](https://dl.acm.org/doi/10.1145/1498765.1498785)
+* Sze, V., Chen, Y. H., Yang, T. J., & Emer, J. (2017). Efficient Processing of Deep Neural Networks: A Tutorial and Survey. Proc. IEEE 105(12). [arXiv](https://arxiv.org/abs/1703.09039)
+* Jouppi, N. et al. (2017). In Datacenter Performance Analysis of a Tensor Processing Unit. ISCA 2017. [arXiv](https://arxiv.org/abs/1704.04760)
+* Vaswani, A. et al. (2017). Attention Is All You Need. [arXiv](https://arxiv.org/abs/1706.03762)
+* NVIDIA. [CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/) · [CUDA C++ Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/) · [Parallel Thread Execution ISA](https://docs.nvidia.com/cuda/parallel-thread-execution/) · [Using Shared Memory in CUDA C/C++](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/) · [vGPU Software Lifecycle](https://docs.nvidia.com/vgpu/news/vgpu-software-lifecycle-on-supported-gpus/index.html)
+* OpenXLA. [StableHLO Specification](https://openxla.org/stablehlo/spec)
+* Google Coral. [Edge TPU FAQ](https://coral.ai/docs/edgetpu/faq/) · [Mini PCIe Accelerator](https://www.coral.ai/products/pcie-accelerator)
+* Microsoft. [Copilot+ PCs developer guide](https://learn.microsoft.com/windows/ai/npu-devices)
+* Smith, M. S. (2025). Your Laptop Isn't Ready for LLMs. That's About to Change. IEEE Spectrum. [Spectrum](https://spectrum.ieee.org/ai-models-locally)
+* Intel. [Core Ultra 7 155H](https://www.intel.com/content/www/us/en/products/sku/236847/intel-core-ultra-7-processor-155h-24m-cache-up-to-4-80-ghz/ordering.html) · Notebookcheck. [Core Ultra 7 155H](https://www.notebookcheck.net/Intel-Core-Ultra-7-155H-Processor-Benchmarks-and-Specs.783323.0.html)
+* Hot Hardware (2023). [Meteor Lake Architecture Revealed](https://hothardware.com/reviews/intel-meteor-lake-architecture?page=4) · Chips and Cheese (2024). [Intel Meteor Lake's NPU](https://chipsandcheese.com/p/intel-meteor-lakes-npu) · Fei & Abdelfattah (2024). [NITRO](https://arxiv.org/abs/2412.11053)
+* AnandTech (2024). [AMD Announces the Ryzen AI 300 Series](https://www.anandtech.com/show/21419/amd-announces-the-ryzen-ai-300-series-for-mobile-zen-5-with-rdna-35-and-xdna2-npu-with-50-tops) · Qualcomm (2024). [Snapdragon X Series press release](https://www.edge-ai-vision.com/?p=48050)
+* TechPowerUp. [GeForce RTX 4090](https://www.techpowerup.com/gpu-specs/geforce-rtx-4090.c3889) · Engadget (2022). [NVIDIA's $1,599 GeForce RTX 4090](https://www.engadget.com/nvidia-rtx-4090-announced-152529456.html)
+* imec (2025). [How can we reduce the environmental impact of chip manufacturing?](https://www.imec-int.com/en/articles/how-can-we-reduce-environmental-impact-chip-manufacturing)
+* Dell. [XPS 13 9340 Product Carbon Footprint](https://www.delltechnologies.com/asset/zh-tw/products/laptops-and-2-in-1s/technical-support/xps-13-9340-pcf-datasheet.pdf)
+* TSMC. [2022 Annual Report, p. 161](https://investor.tsmc.com/static/annualReports/2022/english/ebook/files/basic-html/page161.html) · Taiwan News. [Water use in semiconductor manufacturing](https://www.taiwannews.com.tw/en/news/4970665)
+* American Chemistry Council. [Chemistry in Semiconductors and Electronics](https://americanchemistry.com/content/download/16791/file/Chemistry-in-Semiconductors-and-Electronics.pdf) · Infineon. [From Sand to Smart City](https://www.infineon.com/cms/en/product/promopages/from-sand-to-smart-city/)
+* Epoch AI. [AI chip supply chain constraints](https://epoch.ai/data-insights/ai-chip-supply-chain-constraints) · [Introducing the AI Chip Components Explorer](https://epoch.ai/blog/introducing-the-ai-chip-components-explorer)
+* IntuitionLabs (2026). [NVIDIA AI GPU Pricing Guide](https://intuitionlabs.ai/articles/nvidia-ai-gpu-pricing-guide) · Axe Compute (2026). [Full Year 2025 Results](https://app.edgar.tools/filing/1446159/0001171843-26-003492/exh_991.htm)
+* Introl (2026). [xAI's Memphis Colossus](https://introl.com/blog/xai-memphis-colossus-100000-gpu-supercomputer-infrastructure)
+* Superuser. [What is meant by the terms CPU, Core, Die and Package?](https://superuser.com/questions/324284/what-is-meant-by-the-terms-cpu-core-die-and-package)
+* Cheng (n.d.). Chapter 1 Lecture Notes; Memory Hierarchy Lecture Notes. (no public link)
+* Apple (2024, October 30). Apple introduces M4 Pro and M4 Max. Apple Newsroom. [Apple Newsroom](https://www.apple.com/newsroom/2024/10/apple-introduces-m4-pro-and-m4-max/)
+* Aragón, J. L., González, J., & González, A. (2006). Control speculation for energy efficient next generation superscalar processors. IEEE Transactions on Computers 55(3), pp. 281 to 291. [IEEE](https://doi.org/10.1109/TC.2006.32) · [free PDF](https://webs.um.es/jlaragon/papers/aragon_TC06.pdf)
+* Bernstein, A. J. (1966). Analysis of programs for parallel processing. IEEE Transactions on Electronic Computers EC 15(5), pp. 757 to 763. [IEEE](https://doi.org/10.1109/PGEC.1966.264565)
+* COMSOL (2014, November 13). Why haven't CPU clock speeds increased in the last few years? COMSOL Blog. [COMSOL Blog](https://www.comsol.com/blogs/havent-cpu-clock-speeds-increased-last-years/)
+* Dennard, R. H., Gaensslen, F. H., Yu, H. N., Rideout, V. L., Bassous, E., & LeBlanc, A. R. (1974). Design of ion implanted MOSFET's with very small physical dimensions. IEEE Journal of Solid State Circuits 9(5), pp. 256 to 268. [IEEE](https://doi.org/10.1109/JSSC.1974.1050511)
+* Esmaeilzadeh, H., Blem, E., St. Amant, R., Sankaralingam, K., & Burger, D. (2011). Dark silicon and the end of multicore scaling. ISCA '11, pp. 365 to 376. [ACM](https://doi.org/10.1145/2000064.2000108) · [free PDF (UW Madison)](https://research.cs.wisc.edu/vertical/wiki/index.php/Pubs/B2hd-isca11darksilicon)
+* Fisher, J. A., & Rau, B. R. (1991). Instruction level parallel processing. Science 253(5025), pp. 1233 to 1241. [Science](https://doi.org/10.1126/science.253.5025.1233)
+* Hardavellas, N. (2012). The rise and fall of dark silicon. USENIX ;login: 37(2), pp. 7 to 17. [USENIX](https://www.usenix.org/publications/login/april-2012/rise-and-fall-dark-silicon) · [free PDF](https://users.cs.northwestern.edu/~hardav/paragon/papers/2012-USENIXLogin-DarkSilicon-Hardavellas.pdf)
+* Hennessy, J. L., & Patterson, D. A. (2019). Computer architecture: A quantitative approach (6th ed.). Morgan Kaufmann. [Elsevier](https://shop.elsevier.com/books/computer-architecture/hennessy/978-0-12-811905-1)
+* Ho, A., Erdil, E., & Besiroglu, T. (2023). Limits to the energy efficiency of CMOS microprocessors. [arXiv:2312.08595](https://arxiv.org/abs/2312.08595)
+* Rabaey, J. M., Chandrakasan, A., & Nikolić, B. (2003). Digital integrated circuits: A design perspective (2nd ed.). Prentice Hall.
+* Smith, J. E., & Sohi, G. S. (1995). The microarchitecture of superscalar processors. Proceedings of the IEEE 83(12), pp. 1609 to 1624. [IEEE](https://doi.org/10.1109/5.476078) · [free PDF](https://ftp.cs.wisc.edu/sohi/papers/1995/ieee-proc.superscalar.pdf)
+* Stanford Institute for Human Centered AI (2024). The 2024 AI Index report. [full report PDF](https://aiindex.stanford.edu/wp-content/uploads/2024/04/HAI_AI-Index-Report-2024.pdf)
+* Strubell, E., Ganesh, A., & McCallum, A. (2019). Energy and policy considerations for deep learning in NLP. ACL 2019, pp. 3645 to 3650. [ACL Anthology](https://aclanthology.org/P19-1355/)
+* Sutter, H. (2005). The free lunch is over: A fundamental turn toward concurrency in software. Dr. Dobb's Journal 30(3), pp. 16 to 20. [gotw.ca](http://www.gotw.ca/publications/concurrency-ddj.htm)
+* Wall, D. W. (1991). Limits of instruction level parallelism. ACM SIGPLAN Notices 26(4) (ASPLOS IV), pp. 176 to 188. [ACM](https://doi.org/10.1145/106972.106991) · [free technical report version: DEC WRL Research Report 93/6](https://www.csd.uoc.gr/~hy425/2012f/lectures/wall-ilp.pdf)
+* Wulf, W. A., & McKee, S. A. (1995). Hitting the memory wall: Implications of the obvious. ACM SIGARCH Computer Architecture News 23(1), pp. 20 to 24. [ACM](https://dl.acm.org/doi/10.1145/216585.216588)
